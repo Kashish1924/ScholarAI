@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics Dashboard | ScholarAI{% endblock %}
+
+{% block content %}
+<section class="d-flex flex-column gap-4">
+    <div class="page-panel rounded-4 p-4">
+        <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 align-items-lg-center">
+            <div>
+                <p class="text-uppercase small text-secondary mb-2">Analytics</p>
+                <h1 class="h3 mb-2">Scholarship performance and operational trends</h1>
+                <p class="text-secondary mb-0">A chart-ready admin view for distribution, engagement, deadlines, and inbox volume.</p>
+            </div>
+            <div class="d-flex gap-2">
+                <a class="btn btn-outline-light" href="{{ url_for('admin.dashboard') }}">Back to Dashboard</a>
+                <a class="btn btn-primary" href="{{ url_for('admin.scholarship_list') }}">Manage Data</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-6 col-xl-3"><div class="page-panel rounded-4 p-4 h-100"><p class="small text-secondary text-uppercase mb-2">Scholarships</p><h2 class="display-6 mb-0">{{ analytics.totals.total_scholarships }}</h2></div></div>
+        <div class="col-md-6 col-xl-3"><div class="page-panel rounded-4 p-4 h-100"><p class="small text-secondary text-uppercase mb-2">Bookmarks</p><h2 class="display-6 mb-0">{{ analytics.totals.bookmark_count }}</h2></div></div>
+        <div class="col-md-6 col-xl-3"><div class="page-panel rounded-4 p-4 h-100"><p class="small text-secondary text-uppercase mb-2">Contact Messages</p><h2 class="display-6 mb-0">{{ analytics.totals.contact_messages }}</h2></div></div>
+        <div class="col-md-6 col-xl-3"><div class="page-panel rounded-4 p-4 h-100"><p class="small text-secondary text-uppercase mb-2">Upcoming 7-Day Deadlines</p><h2 class="display-6 mb-0">{{ analytics.upcoming_deadlines }}</h2></div></div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="page-panel rounded-4 p-4 h-100">
+                <h2 class="h5 mb-3">Scholarship Type Distribution</h2>
+                <canvas id="typeDistributionChart" height="220"></canvas>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="page-panel rounded-4 p-4 h-100">
+                <h2 class="h5 mb-3">Publication Status</h2>
+                <canvas id="publicationChart" height="220"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="page-panel rounded-4 p-4 h-100">
+                <h2 class="h5 mb-3">State-wise Count</h2>
+                <div class="table-responsive">
+                    <table class="table table-dark table-borderless align-middle mb-0">
+                        <thead><tr><th>State</th><th>Count</th></tr></thead>
+                        <tbody>
+                            {% for item in analytics.state_wise_count[:10] %}
+                                <tr><td>{{ item.name }}</td><td>{{ item.count }}</td></tr>
+                            {% else %}
+                                <tr><td colspan="2" class="text-secondary">No state data available yet.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="page-panel rounded-4 p-4 h-100">
+                <h2 class="h5 mb-3">Category-wise Count</h2>
+                <div class="table-responsive">
+                    <table class="table table-dark table-borderless align-middle mb-0">
+                        <thead><tr><th>Category</th><th>Count</th></tr></thead>
+                        <tbody>
+                            {% for item in analytics.category_wise_count[:10] %}
+                                <tr><td>{{ item.name }}</td><td>{{ item.count }}</td></tr>
+                            {% else %}
+                                <tr><td colspan="2" class="text-secondary">No category data available yet.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-4">
+            <div class="page-panel rounded-4 p-4 h-100">
+                <h2 class="h5 mb-3">Most Viewed</h2>
+                <div class="d-flex flex-column gap-3">
+                    {% for item in analytics.most_viewed %}
+                        <div class="admin-list-card rounded-4 p-3 border">
+                            <h3 class="h6 mb-1">{{ item.scholarship_name }}</h3>
+                            <p class="text-secondary small mb-0">Views: {{ item.view_count }}</p>
+                        </div>
+                    {% else %}
+                        <p class="text-secondary mb-0">No view data available yet.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="page-panel rounded-4 p-4 h-100">
+                <h2 class="h5 mb-3">Most Bookmarked</h2>
+                <div class="d-flex flex-column gap-3">
+                    {% for item in analytics.most_bookmarked %}
+                        <div class="admin-list-card rounded-4 p-3 border">
+                            <h3 class="h6 mb-1">{{ item.scholarship_name }}</h3>
+                            <p class="text-secondary small mb-0">Bookmarks: {{ item.bookmark_count }}</p>
+                        </div>
+                    {% else %}
+                        <p class="text-secondary mb-0">No bookmark data available yet.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="page-panel rounded-4 p-4 h-100">
+                <h2 class="h5 mb-3">Trending</h2>
+                <div class="d-flex flex-column gap-3">
+                    {% for item in analytics.trending %}
+                        <div class="admin-list-card rounded-4 p-3 border">
+                            <h3 class="h6 mb-1">{{ item.scholarship_name }}</h3>
+                            <p class="text-secondary small mb-0">Trending Score: {{ item.trending_score }}</p>
+                        </div>
+                    {% else %}
+                        <p class="text-secondary mb-0">No trending data available yet.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script>
+    (() => {
+        const typeCtx = document.getElementById("typeDistributionChart");
+        const publicationCtx = document.getElementById("publicationChart");
+
+        if (typeCtx) {
+            new Chart(typeCtx, {
+                type: "doughnut",
+                data: {
+                    labels: {{ analytics.charts.type_distribution.labels|tojson }},
+                    datasets: [{
+                        data: {{ analytics.charts.type_distribution.values|tojson }},
+                        backgroundColor: ["#5eead4", "#f59e0b"],
+                        borderWidth: 0,
+                    }],
+                },
+                options: {
+                    plugins: {
+                        legend: { labels: { color: "#d4d4d8" } },
+                    },
+                },
+            });
+        }
+
+        if (publicationCtx) {
+            new Chart(publicationCtx, {
+                type: "bar",
+                data: {
+                    labels: {{ analytics.charts.publication_distribution.labels|tojson }},
+                    datasets: [{
+                        label: "Scholarships",
+                        data: {{ analytics.charts.publication_distribution.values|tojson }},
+                        backgroundColor: ["#38bdf8", "#a78bfa", "#fb7185"],
+                        borderRadius: 12,
+                    }],
+                },
+                options: {
+                    scales: {
+                        x: { ticks: { color: "#d4d4d8" }, grid: { display: false } },
+                        y: { ticks: { color: "#d4d4d8", precision: 0 }, grid: { color: "rgba(255,255,255,0.08)" } },
+                    },
+                    plugins: {
+                        legend: { display: false },
+                    },
+                },
+            });
+        }
+    })();
+</script>
+{% endblock %}

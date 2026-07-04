@@ -1,3 +1,6 @@
+import csv
+import io
+import re
 from datetime import date, timedelta
 from decimal import Decimal
 
@@ -12,6 +15,38 @@ from app.utils.validation import ValidationError, ScholarshipValidator
 
 class ScholarshipService:
     """Business logic for scholarship CRUD, filtering, and serialization."""
+
+    CSV_FIELDNAMES = [
+        "scholarship_name",
+        "provider_name",
+        "scholarship_type",
+        "scholarship_amount",
+        "eligibility_description",
+        "minimum_cgpa",
+        "maximum_family_income",
+        "gender",
+        "degree",
+        "branch",
+        "academic_year",
+        "minority_eligibility",
+        "disability_eligibility",
+        "hosteller_eligibility",
+        "day_scholar_eligibility",
+        "required_documents",
+        "application_link",
+        "official_website",
+        "application_start_date",
+        "application_end_date",
+        "status",
+        "is_featured",
+        "trending_score",
+        "description",
+        "benefits",
+        "selection_process",
+        "is_renewable",
+        "categories",
+        "states",
+    ]
 
     @staticmethod
     def list_scholarships(filters: dict, page: int = 1, per_page: int = 10) -> dict:
@@ -91,6 +126,147 @@ class ScholarshipService:
         db.session.delete(scholarship)
         db.session.commit()
         return True
+
+    @staticmethod
+    def bulk_apply_action(action: str, scholarship_ids: list[int]) -> dict:
+        """Apply supported bulk actions to selected scholarships."""
+        if not scholarship_ids:
+            raise ValidationError({"selected_ids": ["Select at least one scholarship."]})
+
+        scholarships = Scholarship.query.filter(
+            Scholarship.scholarship_id.in_(scholarship_ids)
+        ).all()
+        if not scholarships:
+            raise ValidationError({"selected_ids": ["No matching scholarships were found."]})
+
+        affected_ids = [item.scholarship_id for item in scholarships]
+        if action == "publish":
+            for item in scholarships:
+                item.status = "published"
+        elif action == "archive":
+            for item in scholarships:
+                item.status = "archived"
+        elif action == "feature":
+            for item in scholarships:
+                item.is_featured = True
+        elif action == "unfeature":
+            for item in scholarships:
+                item.is_featured = False
+        elif action == "delete":
+            for item in scholarships:
+                db.session.delete(item)
+        else:
+            raise ValidationError({"action": ["Unsupported bulk action."]})
+
+        db.session.commit()
+        return {
+            "action": action,
+            "affected_ids": affected_ids,
+            "affected_count": len(affected_ids),
+        }
+
+    @staticmethod
+    def import_scholarships_from_csv(file_storage) -> dict:
+        """Import scholarship rows from a CSV file with row-level validation."""
+        if file_storage is None or not file_storage.filename:
+            raise ValidationError({"csv_file": ["A CSV file is required."]})
+        if not file_storage.filename.lower().endswith(".csv"):
+            raise ValidationError({"csv_file": ["Only CSV files are supported."]})
+
+        try:
+            raw_text = file_storage.stream.read().decode("utf-8-sig")
+        except UnicodeDecodeError as exc:
+            raise ValidationError({"csv_file": ["CSV must be UTF-8 encoded."]}) from exc
+
+        reader = csv.DictReader(io.StringIO(raw_text))
+        if reader.fieldnames is None:
+            raise ValidationError({"csv_file": ["CSV file is empty or missing headers."]})
+
+        missing_headers = [
+            field_name for field_name in ScholarshipService.CSV_FIELDNAMES
+            if field_name not in reader.fieldnames
+        ]
+        if missing_headers:
+            raise ValidationError(
+                {"csv_file": [f"Missing required headers: {', '.join(missing_headers)}."]}
+            )
+
+        imported_count = 0
+        row_errors = []
+
+        for row_number, row in enumerate(reader, start=2):
+            payload = ScholarshipService._csv_row_to_payload(row)
+            try:
+                scholarship = ScholarshipService._build_scholarship(
+                    ScholarshipValidator.validate_create_payload(payload)
+                )
+            except ValidationError as exc:
+                row_errors.append(
+                    {
+                        "row": row_number,
+                        "errors": exc.errors,
+                    }
+                )
+                continue
+
+            db.session.add(scholarship)
+            imported_count += 1
+
+        db.session.commit()
+        return {
+            "imported_count": imported_count,
+            "rejected_count": len(row_errors),
+            "errors": row_errors,
+        }
+
+    @staticmethod
+    def export_scholarships_to_csv() -> str:
+        """Export scholarship records to CSV text."""
+        output = io.StringIO()
+        writer = csv.DictWriter(output, fieldnames=ScholarshipService.CSV_FIELDNAMES)
+        writer.writeheader()
+
+        scholarships = Scholarship.query.options(
+            selectinload(Scholarship.categories).selectinload(ScholarshipCategory.category),
+            selectinload(Scholarship.states).selectinload(ScholarshipState.state),
+        ).order_by(Scholarship.created_at.desc()).all()
+
+        for item in scholarships:
+            writer.writerow(
+                {
+                    "scholarship_name": item.scholarship_name,
+                    "provider_name": item.provider_name,
+                    "scholarship_type": item.scholarship_type,
+                    "scholarship_amount": item.scholarship_amount or "",
+                    "eligibility_description": item.eligibility_description,
+                    "minimum_cgpa": item.minimum_cgpa or "",
+                    "maximum_family_income": item.maximum_family_income or "",
+                    "gender": item.gender,
+                    "degree": item.degree,
+                    "branch": item.branch,
+                    "academic_year": item.academic_year,
+                    "minority_eligibility": item.minority_eligibility,
+                    "disability_eligibility": item.disability_eligibility,
+                    "hosteller_eligibility": item.hosteller_eligibility,
+                    "day_scholar_eligibility": item.day_scholar_eligibility,
+                    "required_documents": item.required_documents or "",
+                    "application_link": item.application_link,
+                    "official_website": item.official_website,
+                    "application_start_date": item.application_start_date.isoformat() if item.application_start_date else "",
+                    "application_end_date": item.application_end_date.isoformat() if item.application_end_date else "",
+                    "status": item.status,
+                    "is_featured": item.is_featured,
+                    "trending_score": item.trending_score,
+                    "description": item.description,
+                    "benefits": item.benefits or "",
+                    "selection_process": item.selection_process or "",
+                    "is_renewable": item.is_renewable,
+                    "categories": ", ".join(link.category.slug for link in item.categories),
+                    "states": ", ".join(link.state.code for link in item.states),
+                }
+            )
+
+        return output.getvalue()
 
     @staticmethod
     def list_for_admin(limit: int = 20) -> list[Scholarship]:
@@ -220,6 +396,167 @@ class ScholarshipService:
                 {"state_id": item.state_id, "name": item.name, "code": item.code}
                 for item in State.query.filter_by(is_active=True).order_by(State.name.asc()).all()
             ],
+        }
+
+    @staticmethod
+    def get_search_suggestions(query_text: str, limit: int = 8) -> list[dict]:
+        """Return lightweight search suggestions for the public search bar."""
+        normalized_query = (query_text or "").strip()
+        if len(normalized_query) < 2:
+            return []
+
+        search_term = f"%{normalized_query}%"
+        suggestions = []
+
+        for scholarship in (
+            Scholarship.query.filter(
+                or_(
+                    Scholarship.scholarship_name.ilike(search_term),
+                    Scholarship.provider_name.ilike(search_term),
+                    Scholarship.branch.ilike(search_term),
+                    Scholarship.degree.ilike(search_term),
+                )
+            )
+            .order_by(Scholarship.is_featured.desc(), Scholarship.trending_score.desc())
+            .limit(limit)
+            .all()
+        ):
+            suggestions.append(
+                {
+                    "type": "scholarship",
+                    "label": scholarship.scholarship_name,
+                    "meta": scholarship.provider_name,
+                    "slug": scholarship.slug,
+                }
+            )
+
+        for category in (
+            Category.query.filter(Category.name.ilike(search_term))
+            .order_by(Category.name.asc())
+            .limit(3)
+            .all()
+        ):
+            suggestions.append(
+                {
+                    "type": "category",
+                    "label": category.name,
+                    "meta": category.slug,
+                    "slug": None,
+                }
+            )
+
+        for state in (
+            State.query.filter(State.name.ilike(search_term))
+            .order_by(State.name.asc())
+            .limit(3)
+            .all()
+        ):
+            suggestions.append(
+                {
+                    "type": "state",
+                    "label": state.name,
+                    "meta": state.code,
+                    "slug": None,
+                }
+            )
+
+        unique_items = []
+        seen = set()
+        for item in suggestions:
+            marker = (item["type"], item["label"], item["meta"])
+            if marker in seen:
+                continue
+            seen.add(marker)
+            unique_items.append(item)
+            if len(unique_items) >= limit:
+                break
+        return unique_items
+
+    @staticmethod
+    def interpret_natural_language_query(query_text: str) -> dict:
+        """Extract practical filters from a free-text scholarship query."""
+        raw_query = (query_text or "").strip()
+        normalized_query = raw_query.lower()
+        filters = {}
+        signals = []
+
+        if not raw_query:
+            return {
+                "input": raw_query,
+                "filters": filters,
+                "signals": signals,
+                "summary": "Enter a longer scholarship request to interpret it.",
+            }
+
+        income_match = re.search(r"(?:under|below|less than)\s+(\d+(?:\.\d+)?)\s*(lakh|lac|lakhs)?", normalized_query)
+        if income_match:
+            income_value = float(income_match.group(1))
+            if income_match.group(2):
+                income_value *= 100000
+            filters["max_income"] = income_value
+            signals.append(f"Family income preference under {int(income_value)} detected.")
+
+        if "girls" in normalized_query or "female" in normalized_query:
+            filters["gender"] = "female"
+            signals.append("Female-only preference detected.")
+        elif "boys" in normalized_query or "male" in normalized_query:
+            filters["gender"] = "male"
+            signals.append("Male-only preference detected.")
+
+        if "government" in normalized_query:
+            filters["scholarship_type"] = "government"
+            signals.append("Government scholarship preference detected.")
+        elif "private" in normalized_query:
+            filters["scholarship_type"] = "private"
+            signals.append("Private scholarship preference detected.")
+
+        if "this week" in normalized_query:
+            filters["deadline_within_days"] = 7
+            signals.append("Deadline window within 7 days detected.")
+        elif "this month" in normalized_query:
+            filters["deadline_within_days"] = 30
+            signals.append("Deadline window within 30 days detected.")
+
+        categories = Category.query.filter_by(is_active=True).all()
+        for category in categories:
+            if category.slug.lower() in normalized_query or category.name.lower() in normalized_query:
+                filters["category_slug"] = category.slug
+                signals.append(f"Category match detected for {category.name}.")
+                break
+
+        states = State.query.filter_by(is_active=True).all()
+        for state in states:
+            if state.name.lower() in normalized_query or state.code.lower() in normalized_query.split():
+                filters["state_code"] = state.code
+                signals.append(f"State match detected for {state.name}.")
+                break
+
+        branch_terms = ["cse", "ece", "eee", "me", "civil", "it", "mechanical"]
+        for branch in branch_terms:
+            if branch in normalized_query:
+                filters["branch"] = branch.upper() if len(branch) <= 3 else branch.title()
+                signals.append(f"Branch match detected for {filters['branch']}.")
+                break
+
+        if "b.tech" in normalized_query or "btech" in normalized_query:
+            filters["degree"] = "B.Tech"
+            signals.append("Degree match detected for B.Tech.")
+
+        year_match = re.search(r"\b([1-4])(st|nd|rd|th)?\s+year\b", normalized_query)
+        if year_match:
+            filters["academic_year"] = year_match.group(1)
+            signals.append(f"Academic year {year_match.group(1)} detected.")
+
+        summary = (
+            "No structured filters were confidently extracted, so the query will behave like a keyword search."
+            if not signals
+            else "Structured hints were extracted from the natural-language query to improve search relevance."
+        )
+        return {
+            "input": raw_query,
+            "filters": filters,
+            "signals": signals,
+            "summary": summary,
         }
 
     @staticmethod
@@ -472,6 +809,54 @@ class ScholarshipService:
         if value is None:
             return None
         return value.isoformat()
+
+    @staticmethod
+    def _csv_row_to_payload(row: dict) -> dict:
+        """Normalize a CSV row into scholarship payload format."""
+        return {
+            "scholarship_name": (row.get("scholarship_name") or "").strip(),
+            "provider_name": (row.get("provider_name") or "").strip(),
+            "scholarship_type": (row.get("scholarship_type") or "").strip(),
+            "scholarship_amount": (row.get("scholarship_amount") or "").strip(),
+            "eligibility_description": (row.get("eligibility_description") or "").strip(),
+            "minimum_cgpa": (row.get("minimum_cgpa") or "").strip(),
+            "maximum_family_income": (row.get("maximum_family_income") or "").strip(),
+            "gender": (row.get("gender") or "").strip() or "all",
+            "degree": (row.get("degree") or "").strip(),
+            "branch": (row.get("branch") or "").strip(),
+            "academic_year": (row.get("academic_year") or "").strip(),
+            "minority_eligibility": (row.get("minority_eligibility") or "").strip() or "false",
+            "disability_eligibility": (row.get("disability_eligibility") or "").strip() or "false",
+            "hosteller_eligibility": (row.get("hosteller_eligibility") or "").strip() or "false",
+            "day_scholar_eligibility": (row.get("day_scholar_eligibility") or "").strip() or "false",
+            "required_documents": (row.get("required_documents") or "").strip(),
+            "application_link": (row.get("application_link") or "").strip(),
+            "official_website": (row.get("official_website") or "").strip(),
+            "application_start_date": (row.get("application_start_date") or "").strip(),
+            "application_end_date": (row.get("application_end_date") or "").strip(),
+            "status": (row.get("status") or "").strip() or "draft",
+            "is_featured": (row.get("is_featured") or "").strip() or "false",
+            "trending_score": (row.get("trending_score") or "").strip() or "0",
+            "description": (row.get("description") or "").strip(),
+            "benefits": (row.get("benefits") or "").strip(),
+            "selection_process": (row.get("selection_process") or "").strip(),
+            "is_renewable": (row.get("is_renewable") or "").strip() or "false",
+            "categories": ScholarshipService._csv_list(row.get("categories")),
+            "states": ScholarshipService._csv_list(row.get("states"), uppercase=True),
+        }
+
+    @staticmethod
+    def _csv_list(value, uppercase: bool = False) -> list[str]:
+        """Convert comma-separated CSV text to normalized list values."""
+        if value in (None, ""):
+            return []
+        items = []
+        for part in str(value).split(","):
+            cleaned = part.strip()
+            if not cleaned:
+                continue
+            items.append(cleaned.upper() if uppercase else cleaned.lower())
+        return items
 
     @staticmethod
     def _serialize_datetime(value) -> str | None:

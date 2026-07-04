@@ -30,6 +30,36 @@
 
             <div class="row g-4">
                 <div class="col-12">
+                    <div class="glass-card p-4">
+                        <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+                            <div>
+                                <p class="text-uppercase small text-secondary mb-1">AI Summary</p>
+                                <h2 class="h5 mb-0">AI-ready placeholder explanation</h2>
+                            </div>
+                            <span class="badge rounded-pill card-badge">Fallback</span>
+                        </div>
+                        <p class="text-secondary mb-3">{{ ai_summary.summary }}</p>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <h3 class="h6 mb-2">Highlights</h3>
+                                <ul class="text-secondary mb-0">
+                                    {% for item in ai_summary.highlights %}
+                                        <li>{{ item }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h3 class="h6 mb-2">What to verify</h3>
+                                <ul class="text-secondary mb-0">
+                                    {% for item in ai_summary.cautions %}
+                                        <li>{{ item }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12">
                     <h2 class="h5 mb-2">Description</h2>
                     <p class="text-secondary mb-0">{{ scholarship.description }}</p>
                 </div>
@@ -69,6 +99,22 @@
             <div class="d-grid gap-2">
                 <a class="btn btn-primary" href="{{ scholarship.application_link }}" target="_blank" rel="noopener noreferrer">Application Link</a>
                 <a class="btn btn-outline-light" href="{{ scholarship.official_website }}" target="_blank" rel="noopener noreferrer">Official Website</a>
+            </div>
+            <hr class="border-secondary-subtle my-4">
+            <div>
+                <h3 class="h6 mb-2">Application Email Draft</h3>
+                <p class="small text-secondary mb-2">{{ email_draft.message }}</p>
+                <div class="glass-card p-3 small">
+                    <div class="mb-2"><strong>Subject:</strong> {{ email_draft.subject }}</div>
+                    <pre class="mb-3 text-light small" style="white-space: pre-wrap;">{{ email_draft.body }}</pre>
+                    <button
+                        class="btn btn-sm btn-outline-light"
+                        type="button"
+                        data-copy-text="{{ email_draft.body }}"
+                    >
+                        Copy Email
+                    </button>
+                </div>
             </div>
         </div>
     </div>

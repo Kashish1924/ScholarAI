@@ -1,11 +1,17 @@
 from flask import Blueprint, request
 
+from app.ai.ai_service import (
+    chat_assistant,
+    compare_scholarships as ai_compare_scholarships,
+    generate_email,
+    summarize_scholarship,
+)
 from app.services.analytics_service import AnalyticsService
 from app.services.content_service import ContentService
 from app.services.eligibility_service import EligibilityService
 from app.services.scholarship_service import ScholarshipService
 from app.utils.api import error_response, success_response
-from app.utils.validation import ValidationError
+from app.utils.validation import AIInputValidator, ValidationError
 
 
 api_bp = Blueprint("api", __name__)
@@ -70,6 +76,22 @@ def search_scholarships():
     per_page = request.args.get("per_page", default=10, type=int)
     result = ScholarshipService.list_scholarships(filters=filters, page=page, per_page=per_page)
     return success_response("Search results fetched successfully.", data=result)
+
+
+@api_bp.get("/search/suggestions")
+def search_suggestions():
+    """Return search suggestions for public autocomplete."""
+    query_text = request.args.get("q", default="", type=str)
+    data = ScholarshipService.get_search_suggestions(query_text)
+    return success_response("Search suggestions fetched successfully.", data=data)
+
+
+@api_bp.get("/search/interpret")
+def interpret_search_query():
+    """Return rule-based extraction for a natural-language scholarship query."""
+    query_text = request.args.get("q", default="", type=str)
+    data = ScholarshipService.interpret_natural_language_query(query_text)
+    return success_response("Search query interpreted successfully.", data=data)
 
 
 @api_bp.get("/filters")
@@ -229,6 +251,29 @@ def list_news():
     return success_response("News fetched successfully.", data=data)
 
 
+@api_bp.post("/contact")
+def create_contact_message():
+    """Create a public contact message from JSON payload."""
+    payload = request.get_json(silent=True)
+    if payload is None:
+        return error_response("Request body must be valid JSON.", status_code=400)
+
+    try:
+        message = ContentService.create_contact_message(payload)
+    except ValidationError as exc:
+        return error_response(
+            "Contact message validation failed.",
+            errors=exc.errors,
+            status_code=422,
+        )
+
+    return success_response(
+        "Contact message sent successfully.",
+        data=ContentService.serialize_contact_message(message),
+        status_code=201,
+    )
+
+
 @api_bp.get("/faqs")
 def list_faqs():
     """Return published FAQs."""
@@ -313,6 +358,91 @@ def fraud_checks():
     """Return rule-based suspicious scholarship warnings."""
     data = EligibilityService.run_fraud_checks_for_all()
     return success_response("Fraud checks completed successfully.", data=data)
+
+
+@api_bp.post("/ai/chat")
+def ai_chat_placeholder():
+    """Return an AI-ready placeholder chat response."""
+    payload = request.get_json(silent=True)
+    if payload is None:
+        return error_response("Request body must be valid JSON.", status_code=400)
+
+    try:
+        clean_payload = AIInputValidator.validate_chat_payload(payload)
+    except ValidationError as exc:
+        return error_response(
+            "AI chat validation failed.",
+            errors=exc.errors,
+            status_code=422,
+        )
+
+    scholarships = ScholarshipService.get_comparison_data(clean_payload["scholarship_ids"])
+    data = chat_assistant(
+        clean_payload["message"],
+        context={
+            "page_context": clean_payload["page_context"],
+            "scholarships": scholarships,
+        },
+    )
+    return success_response("AI placeholder response generated successfully.", data=data)
+
+
+@api_bp.get("/ai/scholarships/<int:scholarship_id>/summary")
+def ai_scholarship_summary(scholarship_id: int):
+    """Return AI-ready placeholder summary for a scholarship."""
+    scholarship = ScholarshipService.get_scholarship_by_id(scholarship_id)
+    if scholarship is None:
+        return error_response("Scholarship not found.", status_code=404)
+
+    data = summarize_scholarship(ScholarshipService.serialize_scholarship(scholarship))
+    return success_response("Scholarship summary generated successfully.", data=data)
+
+
+@api_bp.get("/ai/comparison")
+def ai_comparison_summary():
+    """Return AI-ready placeholder comparison summary."""
+    scholarship_ids = _parse_id_list(request.args.get("ids", ""))
+    if not scholarship_ids:
+        return error_response(
+            "At least one scholarship id is required.",
+            errors={"ids": ["Provide comma-separated scholarship ids."]},
+            status_code=422,
+        )
+
+    items = ScholarshipService.get_comparison_data(scholarship_ids[:3])
+    data = ai_compare_scholarships(items)
+    return success_response("Comparison summary generated successfully.", data=data)
+
+
+@api_bp.post("/ai/email")
+def ai_email_placeholder():
+    """Return AI-ready placeholder email copy."""
+    payload = request.get_json(silent=True)
+    if payload is None:
+        return error_response("Request body must be valid JSON.", status_code=400)
+
+    try:
+        clean_payload = AIInputValidator.validate_email_payload(payload)
+    except ValidationError as exc:
+        return error_response(
+            "Email generation validation failed.",
+            errors=exc.errors,
+            status_code=422,
+        )
+
+    scholarship = ScholarshipService.get_scholarship_by_id(clean_payload["scholarship_id"])
+    if scholarship is None:
+        return error_response("Scholarship not found.", status_code=404)
+
+    data = generate_email(
+        ScholarshipService.serialize_scholarship(scholarship),
+        student_profile={
+            "student_name": clean_payload.get("student_name"),
+            "college_name": clean_payload.get("college_name"),
+            "branch": clean_payload.get("branch"),
+        },
+    )
+    return success_response("Application email generated successfully.", data=data)
 
 
 def _parse_id_list(raw_ids: str) -> list[int]:

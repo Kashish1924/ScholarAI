@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}AI Chat | ScholarAI{% endblock %}
+
+{% block content %}
+<section class="page-panel rounded-5 p-4 p-lg-5 mb-4">
+    <div class="row g-4 align-items-start">
+        <div class="col-lg-7">
+            <p class="text-uppercase small text-secondary mb-2">AI Chat Assistant</p>
+            <h1 class="h2 mb-3">Ask scholarship questions in a chat-style interface.</h1>
+            <p class="text-secondary mb-0">
+                This screen is intentionally AI-ready but currently runs on a safe local placeholder.
+                It never invents scholarships and only guides users toward real backend features and stored records.
+            </p>
+        </div>
+        <div class="col-lg-5">
+            <div class="glass-card p-4">
+                <h2 class="h5 mb-3">Try Asking</h2>
+                <div class="d-flex flex-wrap gap-2">
+                    <button class="btn btn-sm btn-outline-light" type="button" data-chat-prompt="Which scholarships are closing soon?">Closing soon</button>
+                    <button class="btn btn-sm btn-outline-light" type="button" data-chat-prompt="How should I compare scholarships?">Compare help</button>
+                    <button class="btn btn-sm btn-outline-light" type="button" data-chat-prompt="How does eligibility work?">Eligibility</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="page-panel rounded-5 p-4 p-lg-5">
+    <div class="chat-shell d-flex flex-column gap-3" data-ai-chat-shell>
+        <div class="glass-card p-4">
+            <p class="small text-uppercase text-secondary mb-1">Assistant</p>
+            <p class="mb-2">{{ starter_context.message }}</p>
+            <p class="text-secondary mb-0">{{ starter_context.answer }}</p>
+        </div>
+    </div>
+    <form class="mt-4 d-flex flex-column gap-3" data-ai-chat-form>
+        <label class="form-label mb-0" for="aiChatMessage">Message</label>
+        <textarea
+            class="form-control"
+            id="aiChatMessage"
+            rows="4"
+            name="message"
+            placeholder="Ask about deadlines, comparison, eligibility, or application steps..."
+            maxlength="500"
+        ></textarea>
+        <div class="d-flex flex-wrap gap-2 align-items-center">
+            <button class="btn btn-primary" type="submit">Send</button>
+            <span class="small text-secondary" data-ai-chat-status>Local placeholder mode</span>
+        </div>
+    </form>
+</section>
+{% endblock %}

@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}Contact Inbox | ScholarAI{% endblock %}
+
+{% block content %}
+<section class="d-flex flex-column gap-4">
+    <div class="page-panel rounded-4 p-4">
+        <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 align-items-lg-center">
+            <div>
+                <p class="text-uppercase small text-secondary mb-2">Contact Inbox</p>
+                <h1 class="h3 mb-2">Review public messages and follow up cleanly</h1>
+                <p class="text-secondary mb-0">Messages sent from the public contact page appear here for admin review and resolution tracking.</p>
+            </div>
+            <div class="d-flex gap-2">
+                <a class="btn btn-outline-light {% if resolved_filter == '' or resolved_filter is none %}active{% endif %}" href="{{ url_for('admin.contact_messages') }}">All</a>
+                <a class="btn btn-outline-light {% if resolved_filter == 'false' %}active{% endif %}" href="{{ url_for('admin.contact_messages', resolved='false') }}">Open</a>
+                <a class="btn btn-outline-light {% if resolved_filter == 'true' %}active{% endif %}" href="{{ url_for('admin.contact_messages', resolved='true') }}">Resolved</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex flex-column gap-3">
+        {% for message in messages %}
+            <div class="page-panel rounded-4 p-4">
+                <div class="d-flex justify-content-between flex-wrap gap-3 mb-3">
+                    <div>
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <h2 class="h5 mb-0">{{ message.subject }}</h2>
+                            {% if message.is_resolved %}
+                                <span class="badge text-bg-success">Resolved</span>
+                            {% else %}
+                                <span class="badge text-bg-warning">Open</span>
+                            {% endif %}
+                        </div>
+                        <p class="text-secondary mb-0">{{ message.full_name }} · {{ message.email }}</p>
+                    </div>
+                    <div class="text-secondary small">
+                        <div>Created: {{ message.created_at }}</div>
+                        {% if message.resolved_at %}
+                            <div>Resolved: {{ message.resolved_at }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="glass-card p-3 mb-3">
+                    <p class="mb-0 text-secondary" style="white-space: pre-wrap;">{{ message.message }}</p>
+                </div>
+                {% if not message.is_resolved %}
+                    <form method="post" action="{{ url_for('admin.resolve_contact_message', message_id=message.message_id) }}">
+                        {{ resolution_form.hidden_tag() }}
+                        {{ resolution_form.submit(class="btn btn-primary btn-sm") }}
+                    </form>
+                {% endif %}
+            </div>
+        {% else %}
+            <div class="page-panel rounded-4 p-5 text-center">
+                <h2 class="h4 mb-2">No contact messages found.</h2>
+                <p class="text-secondary mb-0">New public messages will appear here once students use the contact form.</p>
+            </div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

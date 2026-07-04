@@ -13,6 +13,26 @@
         <a class="btn btn-outline-light" href="{{ url_for('student.scholarships') }}">Choose Scholarships</a>
     </div>
     {% if comparison_items %}
+        <div class="glass-card p-4 mb-4">
+            <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+                <div>
+                    <p class="text-uppercase small text-secondary mb-1">AI Comparison</p>
+                    <h2 class="h5 mb-0">Backend-backed placeholder guidance</h2>
+                </div>
+                <span class="badge rounded-pill card-badge">Fallback</span>
+            </div>
+            <p class="text-secondary mb-3">{{ ai_comparison.summary }}</p>
+            <div class="row g-3">
+                {% for item in ai_comparison.strengths %}
+                    <div class="col-lg-4">
+                        <div class="page-panel rounded-4 p-3 h-100">
+                            <h3 class="h6 mb-2">{{ item.scholarship_name }}</h3>
+                            <p class="text-secondary mb-0">{{ item.best_for }}</p>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
         <div class="table-responsive compare-table-shell">
             <table class="table table-dark align-middle compare-table mb-0">
                 <thead>

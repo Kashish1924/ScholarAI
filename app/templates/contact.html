@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}Contact | ScholarAI{% endblock %}
+
+{% block content %}
+<section class="page-panel rounded-5 p-4 p-lg-5 mb-4">
+    <div class="row g-4 align-items-start">
+        <div class="col-lg-7">
+            <p class="text-uppercase small text-secondary mb-2">Contact Us</p>
+            <h1 class="h2 mb-3">Send a question, correction, or scholarship suggestion.</h1>
+            <p class="text-secondary mb-0">
+                This form stores your message inside ScholarAI so the admin team can review and resolve it
+                from the dashboard.
+            </p>
+        </div>
+        <div class="col-lg-5">
+            <div class="glass-card p-4">
+                <h2 class="h5 mb-3">Good Reasons to Reach Out</h2>
+                <ul class="list-unstyled d-flex flex-column gap-2 text-secondary mb-0">
+                    <li>Report outdated scholarship data</li>
+                    <li>Suggest a scholarship to add</li>
+                    <li>Ask about filtering or eligibility</li>
+                    <li>Share product feedback</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="row g-4">
+    <div class="col-lg-8">
+        <div class="page-panel rounded-5 p-4 p-lg-5">
+            <form method="post" class="d-flex flex-column gap-3">
+                {{ form.hidden_tag() }}
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">{{ form.full_name.label.text }}</label>
+                        {{ form.full_name(class="form-control", placeholder="Your full name") }}
+                        {% for error in form.full_name.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">{{ form.email.label.text }}</label>
+                        {{ form.email(class="form-control", placeholder="name@example.com") }}
+                        {% for error in form.email.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                    </div>
+                </div>
+                <div>
+                    <label class="form-label">{{ form.subject.label.text }}</label>
+                    {{ form.subject(class="form-control", placeholder="Scholarship correction, support request, feature feedback...") }}
+                    {% for error in form.subject.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                </div>
+                <div>
+                    <label class="form-label">{{ form.message.label.text }}</label>
+                    {{ form.message(class="form-control", rows="7", placeholder="Tell us what you need help with or what should be updated.") }}
+                    {% for error in form.message.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                </div>
+                <div class="d-flex gap-2">
+                    {{ form.submit(class="btn btn-primary") }}
+                    <a class="btn btn-outline-light" href="{{ url_for('main.home') }}">Back Home</a>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="page-panel rounded-5 p-4 h-100">
+            <h2 class="h5 mb-3">Response Flow</h2>
+            <ol class="text-secondary mb-0 d-flex flex-column gap-2 ps-3">
+                <li>Your message is stored with validation and CSRF protection.</li>
+                <li>Admins can review it in the dashboard inbox.</li>
+                <li>Resolved messages remain tracked for audit visibility.</li>
+            </ol>
+        </div>
+    </div>
+</section>
+{% endblock %}

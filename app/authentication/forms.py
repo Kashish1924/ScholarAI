@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import BooleanField, IntegerField, PasswordField, SelectField, StringField, SubmitField, TextAreaField
+from wtforms import BooleanField, FileField, IntegerField, PasswordField, SelectField, StringField, SubmitField, TextAreaField
 from wtforms.validators import DataRequired, Email, Length, Optional, URL
 
 
@@ -140,3 +140,44 @@ class NotificationForm(FlaskForm):
     ends_at = StringField("Ends At", validators=[Optional(), Length(max=25)])
     related_scholarship_id = IntegerField("Related Scholarship ID", validators=[Optional()])
     submit = SubmitField("Save Notification")
+
+
+class CSVUploadForm(FlaskForm):
+    """Admin CSV import form."""
+
+    csv_file = FileField("Scholarship CSV", validators=[DataRequired()])
+    submit = SubmitField("Import CSV")
+
+
+class BulkScholarshipActionForm(FlaskForm):
+    """Admin bulk scholarship action form."""
+
+    action = SelectField(
+        "Bulk Action",
+        choices=[
+            ("publish", "Publish"),
+            ("archive", "Archive"),
+            ("feature", "Mark as Featured"),
+            ("unfeature", "Remove Featured"),
+            ("delete", "Delete"),
+        ],
+        validators=[DataRequired()],
+    )
+    selected_ids = StringField("Selected IDs", validators=[DataRequired()])
+    submit = SubmitField("Apply")
+
+
+class ContactForm(FlaskForm):
+    """Public contact form."""
+
+    full_name = StringField("Full Name", validators=[DataRequired(), Length(max=120)])
+    email = StringField("Email", validators=[DataRequired(), Email(), Length(max=255)])
+    subject = StringField("Subject", validators=[DataRequired(), Length(max=255)])
+    message = TextAreaField("Message", validators=[DataRequired(), Length(max=3000)])
+    submit = SubmitField("Send Message")
+
+
+class ContactResolutionForm(FlaskForm):
+    """Admin contact message resolution form."""
+
+    submit = SubmitField("Mark as Resolved")

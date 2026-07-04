@@ -8,8 +8,14 @@
             <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-2">
                 <li class="nav-item"><a class="nav-link" href="{{ url_for('main.home') }}">Home</a></li>
                 <li class="nav-item"><a class="nav-link" href="{{ url_for('student.scholarships') }}">Scholarships</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('student.trending') }}">Trending</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('student.deadlines') }}">Deadlines</a></li>
                 <li class="nav-item"><a class="nav-link" href="{{ url_for('student.news') }}">News</a></li>
                 <li class="nav-item"><a class="nav-link" href="{{ url_for('student.faq') }}">FAQ</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('student.ai_recommendations') }}">AI Recommendations</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('student.ai_chat') }}">AI Chat</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('main.about') }}">About</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('main.contact') }}">Contact</a></li>
                 <li class="nav-item"><a class="nav-link" href="{{ url_for('student.bookmarks') }}">Bookmarks</a></li>
                 <li class="nav-item"><a class="nav-link" href="{{ url_for('student.compare') }}">Compare</a></li>
                 <li class="nav-item theme-switcher">
@@ -17,6 +23,8 @@
                 </li>
                 {% if session.get("admin_id") %}
                     <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.dashboard') }}">Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.analytics_dashboard') }}">Analytics</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.contact_messages') }}">Inbox</a></li>
                     <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.news_list') }}">Content</a></li>
                     <li class="nav-item">
                         <form method="post" action="{{ url_for('admin.logout') }}" class="d-inline">

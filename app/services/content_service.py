@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 
 from app.extensions import db
-from app.models import FAQ, News, Notification, Scholarship
+from app.models import ContactMessage, FAQ, News, Notification, Scholarship
 from app.utils.slug import slugify
 from app.utils.validation import ValidationError
 
@@ -235,6 +235,50 @@ class ContentService:
         return True
 
     @staticmethod
+    def create_contact_message(payload: dict) -> ContactMessage:
+        """Create a public contact message."""
+        clean = ContentService._validate_contact_payload(payload)
+        message = ContactMessage(
+            full_name=clean["full_name"],
+            email=clean["email"],
+            subject=clean["subject"],
+            message=clean["message"],
+        )
+        db.session.add(message)
+        db.session.commit()
+        return message
+
+    @staticmethod
+    def list_contact_messages(limit: int = 100, resolved: bool | None = None) -> list[ContactMessage]:
+        """Return admin-facing contact messages."""
+        query = ContactMessage.query
+        if resolved is not None:
+            query = query.filter_by(is_resolved=resolved)
+        return query.order_by(
+            ContactMessage.is_resolved.asc(),
+            ContactMessage.created_at.desc(),
+        ).limit(max(limit, 1)).all()
+
+    @staticmethod
+    def get_contact_message_by_id(message_id: int) -> ContactMessage | None:
+        """Return a contact message by id."""
+        return ContactMessage.query.filter_by(message_id=message_id).first()
+
+    @staticmethod
+    def resolve_contact_message(message_id: int, admin_id: int | None = None) -> ContactMessage | None:
+        """Mark a contact message as resolved."""
+        message = ContentService.get_contact_message_by_id(message_id)
+        if message is None:
+            return None
+
+        if not message.is_resolved:
+            message.is_resolved = True
+            message.resolved_at = datetime.now(timezone.utc)
+            message.resolved_by_admin_id = admin_id
+            db.session.commit()
+        return message
+
+    @staticmethod
     def serialize_news(news: News) -> dict:
         """Serialize news record."""
         return {
@@ -281,6 +325,22 @@ class ContentService:
             "related_scholarship_id": notification.related_scholarship_id,
             "created_at": notification.created_at.isoformat(),
             "updated_at": notification.updated_at.isoformat(),
+        }
+
+    @staticmethod
+    def serialize_contact_message(message: ContactMessage) -> dict:
+        """Serialize contact message record."""
+        return {
+            "message_id": message.message_id,
+            "full_name": message.full_name,
+            "email": message.email,
+            "subject": message.subject,
+            "message": message.message,
+            "is_resolved": message.is_resolved,
+            "resolved_at": message.resolved_at.isoformat() if message.resolved_at else None,
+            "resolved_by_admin_id": message.resolved_by_admin_id,
+            "created_at": message.created_at.isoformat(),
+            "updated_at": message.updated_at.isoformat(),
         }
 
     @staticmethod
@@ -395,3 +455,40 @@ class ContentService:
         except ValueError:
             errors.setdefault(field_name, []).append("Must use a valid datetime format.")
             return None
+
+    @staticmethod
+    def _validate_contact_payload(payload: dict) -> dict:
+        """Validate public contact form input."""
+        errors = {}
+        full_name = (payload.get("full_name") or "").strip()
+        email = (payload.get("email") or "").strip().lower()
+        subject = (payload.get("subject") or "").strip()
+        message = (payload.get("message") or "").strip()
+
+        if not full_name:
+            errors.setdefault("full_name", []).append("Full name is required.")
+        if not email or "@" not in email:
+            errors.setdefault("email", []).append("A valid email address is required.")
+        if not subject:
+            errors.setdefault("subject", []).append("Subject is required.")
+        if not message:
+            errors.setdefault("message", []).append("Message is required.")
+
+        if full_name and len(full_name) > 120:
+            errors.setdefault("full_name", []).append("Full name must be 120 characters or fewer.")
+        if email and len(email) > 255:
+            errors.setdefault("email", []).append("Email must be 255 characters or fewer.")
+        if subject and len(subject) > 255:
+            errors.setdefault("subject", []).append("Subject must be 255 characters or fewer.")
+        if message and len(message) > 3000:
+            errors.setdefault("message", []).append("Message must be 3000 characters or fewer.")
+
+        if errors:
+            raise ValidationError(errors)
+
+        return {
+            "full_name": full_name,
+            "email": email,
+            "subject": subject,
+            "message": message,
+        }

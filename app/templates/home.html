@@ -35,6 +35,10 @@
                 </div>
             </form>
             <div class="d-flex flex-wrap gap-3 mt-4">
+                <a class="btn btn-primary" href="{{ url_for('student.ai_recommendations') }}">AI Recommendations</a>
+                <a class="btn btn-outline-light" href="{{ url_for('student.ai_chat') }}">AI Chat</a>
+                <a class="btn btn-outline-light" href="{{ url_for('student.trending') }}">Trending Scholarships</a>
+                <a class="btn btn-outline-light" href="{{ url_for('student.deadlines') }}">Closing Soon</a>
                 <a class="btn btn-outline-light" href="{{ url_for('student.eligibility_checker') }}">Eligibility Checker</a>
                 <a class="btn btn-outline-light" href="{{ url_for('student.bookmarks') }}">Bookmarks</a>
                 <a class="btn btn-outline-light" href="{{ url_for('student.compare') }}">Compare</a>

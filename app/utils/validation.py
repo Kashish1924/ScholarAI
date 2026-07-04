@@ -431,3 +431,85 @@ class EligibilityInputValidator:
 
         ScholarshipValidator._raise_if_errors(errors)
         return clean
+
+
+class AIInputValidator:
+    """Validation rules for AI-ready placeholder endpoints."""
+
+    ALLOWED_PAGE_CONTEXTS = {
+        "general",
+        "scholarship_detail",
+        "comparison",
+        "eligibility",
+        "recommendations",
+    }
+
+    @classmethod
+    def validate_chat_payload(cls, payload: dict) -> dict:
+        """Validate chat-style placeholder input."""
+        errors = {}
+        clean = {}
+
+        clean["message"] = ScholarshipValidator._clean_text(
+            "message",
+            payload.get("message"),
+            errors,
+        )
+        if clean["message"] and len(clean["message"]) > 500:
+            errors.setdefault("message", []).append("Message must be 500 characters or fewer.")
+
+        page_context = payload.get("page_context", "general")
+        clean["page_context"] = ScholarshipValidator._clean_text(
+            "page_context",
+            page_context,
+            errors,
+        )
+        if clean["page_context"] and clean["page_context"] not in cls.ALLOWED_PAGE_CONTEXTS:
+            errors.setdefault("page_context", []).append("Unsupported page context.")
+
+        scholarship_ids = payload.get("scholarship_ids", [])
+        if scholarship_ids in (None, ""):
+            scholarship_ids = []
+        if not isinstance(scholarship_ids, list):
+            errors.setdefault("scholarship_ids", []).append("Must be a list of scholarship ids.")
+            scholarship_ids = []
+
+        clean_ids = []
+        for item in scholarship_ids[:3]:
+            if isinstance(item, int) and item > 0:
+                clean_ids.append(item)
+            elif isinstance(item, str) and item.isdigit():
+                clean_ids.append(int(item))
+            else:
+                errors.setdefault("scholarship_ids", []).append(
+                    "Scholarship ids must be positive integers."
+                )
+                break
+        clean["scholarship_ids"] = clean_ids
+
+        ScholarshipValidator._raise_if_errors(errors)
+        return clean
+
+    @classmethod
+    def validate_email_payload(cls, payload: dict) -> dict:
+        """Validate application email placeholder input."""
+        errors = {}
+        clean = {}
+
+        scholarship_id = payload.get("scholarship_id")
+        try:
+            clean["scholarship_id"] = int(scholarship_id)
+        except (TypeError, ValueError):
+            errors.setdefault("scholarship_id", []).append("Scholarship id must be a valid integer.")
+
+        for field_name in {"student_name", "college_name", "branch"}:
+            value = payload.get(field_name)
+            if value in (None, ""):
+                clean[field_name] = None
+                continue
+            clean[field_name] = ScholarshipValidator._clean_text(field_name, value, errors)
+            if clean[field_name] and len(clean[field_name]) > 120:
+                errors.setdefault(field_name, []).append("Must be 120 characters or fewer.")
+
+        ScholarshipValidator._raise_if_errors(errors)
+        return clean

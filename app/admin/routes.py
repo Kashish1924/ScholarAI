@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from flask import Blueprint, flash, redirect, render_template, session, url_for
+from flask import Blueprint, Response, flash, redirect, render_template, request, session, url_for
 
 from app.admin.content_helpers import (
     build_faq_payload_from_form,
@@ -12,9 +12,19 @@ from app.admin.content_helpers import (
 )
 from app.admin.helpers import build_scholarship_payload_from_form, scholarship_to_form_payload
 from app.authentication.decorators import admin_login_required
-from app.authentication.forms import AdminLoginForm, FAQForm, NewsForm, NotificationForm, ScholarshipForm
+from app.authentication.forms import (
+    AdminLoginForm,
+    BulkScholarshipActionForm,
+    ContactResolutionForm,
+    CSVUploadForm,
+    FAQForm,
+    NewsForm,
+    NotificationForm,
+    ScholarshipForm,
+)
 from app.services.activity_log_service import ActivityLogService
 from app.services.admin_service import AdminService
+from app.services.analytics_service import AnalyticsService
 from app.services.content_service import ContentService
 from app.services.scholarship_service import ScholarshipService
 from app.utils.validation import ValidationError
@@ -69,6 +79,27 @@ def dashboard():
     )
 
 
+@admin_bp.get("/analytics")
+@admin_login_required
+def analytics_dashboard():
+    """Render the richer analytics dashboard."""
+    analytics = AnalyticsService.get_dashboard_analytics()
+    return render_template("admin/analytics.html", analytics=analytics)
+
+
+@admin_bp.get("/settings")
+@admin_login_required
+def settings():
+    """Render the admin settings and operational overview page."""
+    admin = AdminService.get_admin_by_id(session.get("admin_id"))
+    analytics = AnalyticsService.get_dashboard_analytics()
+    return render_template(
+        "admin/settings.html",
+        admin=admin,
+        analytics=analytics,
+    )
+
+
 @admin_bp.post("/logout")
 @admin_login_required
 def logout():
@@ -91,7 +122,105 @@ def logout():
 def scholarship_list():
     """Render the scholarship management table."""
     scholarships = ScholarshipService.list_for_admin(limit=100)
-    return render_template("admin/manage_scholarships.html", scholarships=scholarships)
+    bulk_form = BulkScholarshipActionForm()
+    return render_template(
+        "admin/manage_scholarships.html",
+        scholarships=scholarships,
+        bulk_form=bulk_form,
+    )
+
+
+@admin_bp.route("/scholarships/import", methods=["GET", "POST"])
+@admin_login_required
+def import_scholarships():
+    """Import scholarships from a CSV file."""
+    form = CSVUploadForm()
+    import_result = None
+    if form.validate_on_submit():
+        try:
+            import_result = ScholarshipService.import_scholarships_from_csv(form.csv_file.data)
+        except ValidationError as exc:
+            _attach_form_errors(form, exc.errors)
+        else:
+            ActivityLogService.log_admin_activity(
+                admin_id=session.get("admin_id"),
+                action_type="import_csv",
+                entity_type="scholarship",
+                description=(
+                    f"Imported {import_result['imported_count']} scholarships "
+                    f"and rejected {import_result['rejected_count']} rows."
+                ),
+                metadata=import_result,
+            )
+            flash(
+                f"CSV import completed. Imported {import_result['imported_count']} rows and "
+                f"rejected {import_result['rejected_count']} rows.",
+                "success",
+            )
+    return render_template(
+        "admin/import_scholarships.html",
+        form=form,
+        import_result=import_result,
+        csv_headers=ScholarshipService.CSV_FIELDNAMES,
+    )
+
+
+@admin_bp.get("/scholarships/export")
+@admin_login_required
+def export_scholarships():
+    """Export scholarships as CSV."""
+    csv_text = ScholarshipService.export_scholarships_to_csv()
+    ActivityLogService.log_admin_activity(
+        admin_id=session.get("admin_id"),
+        action_type="export_csv",
+        entity_type="scholarship",
+        description="Exported scholarship records as CSV.",
+    )
+    return Response(
+        csv_text,
+        mimetype="text/csv",
+        headers={
+            "Content-Disposition": "attachment; filename=scholarships_export.csv",
+        },
+    )
+
+
+@admin_bp.post("/scholarships/bulk-action")
+@admin_login_required
+def bulk_scholarship_action():
+    """Apply a bulk action to selected scholarships."""
+    form = BulkScholarshipActionForm()
+    if not form.validate_on_submit():
+        flash("Bulk action submission is invalid.", "danger")
+        return redirect(url_for("admin.scholarship_list"))
+
+    selected_ids = [
+        int(item.strip())
+        for item in form.selected_ids.data.split(",")
+        if item.strip().isdigit()
+    ]
+    try:
+        result = ScholarshipService.bulk_apply_action(form.action.data, selected_ids)
+    except ValidationError as exc:
+        for field_errors in exc.errors.values():
+            for error in field_errors:
+                flash(error, "danger")
+    else:
+        ActivityLogService.log_admin_activity(
+            admin_id=session.get("admin_id"),
+            action_type=f"bulk_{result['action']}",
+            entity_type="scholarship",
+            description=(
+                f"Applied bulk action '{result['action']}' to "
+                f"{result['affected_count']} scholarships."
+            ),
+            metadata=result,
+        )
+        flash(
+            f"Bulk action '{result['action']}' applied to {result['affected_count']} scholarships.",
+            "success",
+        )
+    return redirect(url_for("admin.scholarship_list"))
 
 
 @admin_bp.route("/scholarships/add", methods=["GET", "POST"])
@@ -365,6 +494,52 @@ def notification_list():
     """Render notification management table."""
     notifications = ContentService.list_notification_records()
     return render_template("admin/manage_notifications.html", notifications=notifications)
+
+
+@admin_bp.get("/contacts")
+@admin_login_required
+def contact_messages():
+    """Render the contact message inbox."""
+    resolved_filter = request.args.get("resolved", type=str)
+    resolved = None
+    if resolved_filter in {"true", "false"}:
+        resolved = resolved_filter == "true"
+    messages = ContentService.list_contact_messages(limit=100, resolved=resolved)
+    resolution_form = ContactResolutionForm()
+    return render_template(
+        "admin/manage_contacts.html",
+        messages=messages,
+        resolution_form=resolution_form,
+        resolved_filter=resolved_filter,
+    )
+
+
+@admin_bp.post("/contacts/<int:message_id>/resolve")
+@admin_login_required
+def resolve_contact_message(message_id: int):
+    """Mark a contact message as resolved."""
+    form = ContactResolutionForm()
+    if not form.validate_on_submit():
+        flash("Contact resolution request is invalid.", "danger")
+        return redirect(url_for("admin.contact_messages"))
+
+    message = ContentService.resolve_contact_message(
+        message_id,
+        admin_id=session.get("admin_id"),
+    )
+    if message is None:
+        flash("Contact message not found.", "danger")
+        return redirect(url_for("admin.contact_messages"))
+
+    ActivityLogService.log_admin_activity(
+        admin_id=session.get("admin_id"),
+        action_type="resolve",
+        entity_type="contact_message",
+        entity_id=message.message_id,
+        description=f"Resolved contact message from {message.email}.",
+    )
+    flash("Contact message marked as resolved.", "success")
+    return redirect(url_for("admin.contact_messages"))
 
 
 @admin_bp.route("/notifications/add", methods=["GET", "POST"])

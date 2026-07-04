@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}Settings | ScholarAI{% endblock %}
+
+{% block content %}
+<section class="d-flex flex-column gap-4">
+    <div class="page-panel rounded-4 p-4">
+        <p class="text-uppercase small text-secondary mb-2">Settings</p>
+        <h1 class="h3 mb-2">Admin settings and operational context</h1>
+        <p class="text-secondary mb-0">A lightweight settings page for account visibility, environment awareness, and platform health guidance.</p>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-5">
+            <div class="page-panel rounded-4 p-4 h-100">
+                <h2 class="h5 mb-3">Account Summary</h2>
+                <div class="d-flex flex-column gap-3">
+                    <div><span class="info-label">Admin Name</span><div class="info-value">{{ admin.full_name if admin else 'Unknown' }}</div></div>
+                    <div><span class="info-label">Email</span><div class="info-value">{{ admin.email if admin else 'Unknown' }}</div></div>
+                    <div><span class="info-label">Last Login</span><div class="info-value">{{ admin.last_login_at if admin and admin.last_login_at else 'Not available' }}</div></div>
+                    <div><span class="info-label">Session Mode</span><div class="info-value">Admin-authenticated</div></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-7">
+            <div class="page-panel rounded-4 p-4 h-100">
+                <h2 class="h5 mb-3">Operational Checklist</h2>
+                <div class="row g-3">
+                    <div class="col-md-6"><div class="glass-card p-3 h-100"><h3 class="h6 mb-2">Data Hygiene</h3><p class="text-secondary mb-0">Review CSV imports, archive outdated scholarships, and keep provider links verified.</p></div></div>
+                    <div class="col-md-6"><div class="glass-card p-3 h-100"><h3 class="h6 mb-2">Inbox Review</h3><p class="text-secondary mb-0">Monitor new contact messages and mark resolved items for clear admin follow-through.</p></div></div>
+                    <div class="col-md-6"><div class="glass-card p-3 h-100"><h3 class="h6 mb-2">Content Quality</h3><p class="text-secondary mb-0">Keep news, notifications, and FAQs current so public-facing content stays useful.</p></div></div>
+                    <div class="col-md-6"><div class="glass-card p-3 h-100"><h3 class="h6 mb-2">Deployment Safety</h3><p class="text-secondary mb-0">Use a strong secret key, verify environment configuration, and run tests before release.</p></div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="page-panel rounded-4 p-4 h-100">
+                <h2 class="h5 mb-3">Platform Counters</h2>
+                <div class="row g-3">
+                    <div class="col-6"><div class="metric-card"><span class="metric-value">{{ analytics.totals.total_scholarships }}</span><span class="metric-label">Scholarships</span></div></div>
+                    <div class="col-6"><div class="metric-card"><span class="metric-value">{{ analytics.totals.published_scholarships }}</span><span class="metric-label">Published</span></div></div>
+                    <div class="col-6"><div class="metric-card"><span class="metric-value">{{ analytics.totals.contact_messages }}</span><span class="metric-label">Messages</span></div></div>
+                    <div class="col-6"><div class="metric-card"><span class="metric-value">{{ analytics.totals.resolved_messages }}</span><span class="metric-label">Resolved</span></div></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="page-panel rounded-4 p-4 h-100">
+                <h2 class="h5 mb-3">Quick Actions</h2>
+                <div class="d-flex flex-wrap gap-2">
+                    <a class="btn btn-primary" href="{{ url_for('admin.analytics_dashboard') }}">Open Analytics</a>
+                    <a class="btn btn-outline-light" href="{{ url_for('admin.contact_messages') }}">Open Inbox</a>
+                    <a class="btn btn-outline-light" href="{{ url_for('admin.import_scholarships') }}">Import CSV</a>
+                    <a class="btn btn-outline-light" href="{{ url_for('admin.news_list') }}">Manage Content</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

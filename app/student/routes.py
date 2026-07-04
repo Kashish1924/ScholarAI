@@ -1,5 +1,11 @@
 from flask import Blueprint, abort, render_template, request
 
+from app.ai.ai_service import (
+    chat_assistant,
+    compare_scholarships as ai_compare_scholarships,
+    generate_email,
+    summarize_scholarship,
+)
 from app.services.content_service import ContentService
 from app.services.eligibility_service import EligibilityService
 from app.services.scholarship_service import ScholarshipService
@@ -26,12 +32,23 @@ def scholarships():
         "deadline_within_days": request.args.get("deadline_within_days", type=int),
         "status": "published",
     }
+    search_helper = None
+    if filters["keyword"]:
+        search_helper = ScholarshipService.interpret_natural_language_query(filters["keyword"])
+
+    effective_filters = dict(filters)
+    if search_helper:
+        for field_name, field_value in search_helper["filters"].items():
+            if not effective_filters.get(field_name):
+                effective_filters[field_name] = field_value
     page = request.args.get("page", default=1, type=int)
-    result = ScholarshipService.list_scholarships(filters=filters, page=page, per_page=9)
+    result = ScholarshipService.list_scholarships(filters=effective_filters, page=page, per_page=9)
     return render_template(
         "student/scholarships.html",
         result=result,
-        filters=filters,
+        filters=effective_filters,
+        raw_filters=filters,
+        search_helper=search_helper,
     )
 
 
@@ -54,10 +71,13 @@ def scholarship_detail(slug: str):
     related_items = [
         item for item in related_result["items"] if item["slug"] != scholarship.slug
     ][:3]
+    serialized_scholarship = ScholarshipService.serialize_scholarship(scholarship)
     return render_template(
         "student/scholarship_detail.html",
-        scholarship=ScholarshipService.serialize_scholarship(scholarship),
+        scholarship=serialized_scholarship,
         related_items=related_items,
+        ai_summary=summarize_scholarship(serialized_scholarship),
+        email_draft=generate_email(serialized_scholarship),
     )
 
 
@@ -81,6 +101,7 @@ def compare():
         "student/compare.html",
         comparison_items=comparison_items,
         selected_ids=scholarship_ids[:3],
+        ai_comparison=ai_compare_scholarships(comparison_items),
     )
 
 
@@ -104,6 +125,20 @@ def notifications():
     """Render active student notifications."""
     items = ContentService.list_active_notifications(audience_type="student")
     return render_template("student/notifications.html", notifications=items)
+
+
+@student_bp.get("/trending")
+def trending():
+    """Render the dedicated trending scholarships page."""
+    sections = ScholarshipService.get_homepage_sections()
+    return render_template("student/trending.html", items=sections["trending"])
+
+
+@student_bp.get("/deadlines")
+def deadlines():
+    """Render scholarships closing soon grouped by urgency."""
+    reminders = EligibilityService.get_deadline_reminders(within_days=30)
+    return render_template("student/deadlines.html", reminders=reminders)
 
 
 @student_bp.get("/eligibility-checker")
@@ -140,4 +175,55 @@ def eligibility_checker():
         errors=errors,
         submitted=submitted,
         filters=ScholarshipService.get_filter_options(),
+    )
+
+
+@student_bp.get("/ai-recommendations")
+def ai_recommendations():
+    """Render AI-ready recommendations backed by deterministic matching."""
+    result = None
+    errors = {}
+    submitted = False
+
+    if request.args:
+        submitted = True
+        payload = {
+            "income": request.args.get("income", type=float),
+            "cgpa": request.args.get("cgpa", type=float),
+            "category_slug": request.args.get("category_slug", type=str),
+            "state_code": request.args.get("state_code", type=str),
+            "gender": request.args.get("gender", type=str),
+            "degree": request.args.get("degree", type=str),
+            "branch": request.args.get("branch", type=str),
+            "academic_year": request.args.get("academic_year", type=str),
+            "minority": request.args.get("minority", default="false", type=str),
+            "disability": request.args.get("disability", default="false", type=str),
+            "hosteller": request.args.get("hosteller", default="false", type=str),
+            "day_scholar": request.args.get("day_scholar", default="false", type=str),
+        }
+        try:
+            result = EligibilityService.evaluate_student_profile(payload)
+        except ValidationError as exc:
+            errors = exc.errors
+
+    return render_template(
+        "student/ai_recommendations.html",
+        result=result,
+        errors=errors,
+        submitted=submitted,
+        filters=ScholarshipService.get_filter_options(),
+    )
+
+
+@student_bp.get("/ai-chat")
+def ai_chat():
+    """Render the AI-ready chat placeholder page."""
+    sections = ScholarshipService.get_homepage_sections()
+    starter_context = chat_assistant(
+        "How can ScholarAI help me?",
+        context={"scholarships": sections["featured"][:2]},
+    )
+    return render_template(
+        "student/ai_chat.html",
+        starter_context=starter_context,
     )

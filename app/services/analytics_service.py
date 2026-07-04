@@ -2,7 +2,15 @@ from datetime import date, timedelta
 
 from sqlalchemy import func
 
-from app.models import Bookmark, Category, Scholarship, ScholarshipCategory, ScholarshipState, State
+from app.models import (
+    Bookmark,
+    Category,
+    ContactMessage,
+    Scholarship,
+    ScholarshipCategory,
+    ScholarshipState,
+    State,
+)
 
 
 class AnalyticsService:
@@ -36,6 +44,8 @@ class AnalyticsService:
                 ).count(),
                 "published_scholarships": Scholarship.query.filter_by(status="published").count(),
                 "bookmark_count": Bookmark.query.count(),
+                "contact_messages": ContactMessage.query.count(),
+                "resolved_messages": ContactMessage.query.filter_by(is_resolved=True).count(),
             },
             "upcoming_deadlines": Scholarship.query.filter(
                 Scholarship.status == "published",
@@ -79,6 +89,23 @@ class AnalyticsService:
             ],
             "state_wise_count": AnalyticsService._count_named_records(state_counts),
             "category_wise_count": AnalyticsService._count_named_records(category_counts),
+            "charts": {
+                "type_distribution": {
+                    "labels": ["Government", "Private"],
+                    "values": [
+                        Scholarship.query.filter_by(scholarship_type="government").count(),
+                        Scholarship.query.filter_by(scholarship_type="private").count(),
+                    ],
+                },
+                "publication_distribution": {
+                    "labels": ["Published", "Draft", "Archived"],
+                    "values": [
+                        Scholarship.query.filter_by(status="published").count(),
+                        Scholarship.query.filter_by(status="draft").count(),
+                        Scholarship.query.filter_by(status="archived").count(),
+                    ],
+                },
+            },
         }
 
     @staticmethod

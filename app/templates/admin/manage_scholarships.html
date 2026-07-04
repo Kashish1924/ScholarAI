@@ -10,13 +10,35 @@
             <h2 class="h3 mb-1">Manage Scholarships</h2>
             <p class="text-secondary mb-0">Review, edit, and remove scholarship records from the admin console.</p>
         </div>
-        <a class="btn btn-primary" href="{{ url_for('admin.add_scholarship') }}">Add Scholarship</a>
+        <div class="d-flex flex-wrap gap-2">
+            <a class="btn btn-outline-light" href="{{ url_for('admin.import_scholarships') }}">Import CSV</a>
+            <a class="btn btn-outline-light" href="{{ url_for('admin.export_scholarships') }}">Export CSV</a>
+            <a class="btn btn-primary" href="{{ url_for('admin.add_scholarship') }}">Add Scholarship</a>
+        </div>
     </div>
+
+    <form method="post" action="{{ url_for('admin.bulk_scholarship_action') }}" id="bulkActionForm" class="mb-4">
+        {{ bulk_form.hidden_tag() }}
+        <div class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label" for="{{ bulk_form.action.id }}">{{ bulk_form.action.label.text }}</label>
+                {{ bulk_form.action(class="form-select") }}
+            </div>
+            <div class="col-md-5">
+                {{ bulk_form.selected_ids(type="hidden", id="bulkSelectedIds") }}
+                <div class="small text-secondary">Select scholarship rows below, then apply a bulk action.</div>
+            </div>
+            <div class="col-md-3 d-grid">
+                <button class="btn btn-primary" type="submit">{{ bulk_form.submit.label.text }}</button>
+            </div>
+        </div>
+    </form>
 
     <div class="table-responsive">
         <table class="table table-dark table-hover align-middle mb-0">
             <thead>
                 <tr>
+                    <th><input type="checkbox" class="form-check-input" id="selectAllScholarships"></th>
                     <th>Name</th>
                     <th>Provider</th>
                     <th>Type</th>
@@ -28,6 +50,7 @@
             <tbody>
                 {% for scholarship in scholarships %}
                     <tr>
+                        <td><input type="checkbox" class="form-check-input scholarship-select" value="{{ scholarship.scholarship_id }}"></td>
                         <td>{{ scholarship.scholarship_name }}</td>
                         <td>{{ scholarship.provider_name }}</td>
                         <td class="text-capitalize">{{ scholarship.scholarship_type }}</td>
@@ -45,11 +68,36 @@
                     </tr>
                 {% else %}
                     <tr>
-                        <td colspan="6" class="text-secondary">No scholarships added yet.</td>
+                        <td colspan="7" class="text-secondary">No scholarships added yet.</td>
                     </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
 </section>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const selectAll = document.getElementById("selectAllScholarships");
+    const rowChecks = Array.from(document.querySelectorAll(".scholarship-select"));
+    const hiddenField = document.getElementById("bulkSelectedIds");
+
+    const syncSelectedIds = () => {
+        hiddenField.value = rowChecks.filter((item) => item.checked).map((item) => item.value).join(",");
+    };
+
+    if (selectAll) {
+        selectAll.addEventListener("change", () => {
+            rowChecks.forEach((item) => {
+                item.checked = selectAll.checked;
+            });
+            syncSelectedIds();
+        });
+    }
+
+    rowChecks.forEach((item) => {
+        item.addEventListener("change", syncSelectedIds);
+    });
+});
+</script>
 {% endblock %}

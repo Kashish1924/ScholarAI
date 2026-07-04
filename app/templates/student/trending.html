@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% from "partials/student_cards.html" import scholarship_card %}
+
+{% block title %}Trending Scholarships | ScholarAI{% endblock %}
+
+{% block content %}
+<section class="page-panel rounded-5 p-4 p-lg-5 mb-4">
+    <div class="row g-4 align-items-center">
+        <div class="col-lg-8">
+            <p class="text-uppercase small text-secondary mb-2">Trending Scholarships</p>
+            <h1 class="display-6 mb-3">See which scholarships are getting the most attention.</h1>
+            <p class="text-secondary mb-0">
+                This list is ranked with backend signals like trending score, featured status, and platform activity.
+            </p>
+        </div>
+        <div class="col-lg-4">
+            <div class="glass-card p-4">
+                <h2 class="h5 mb-3">Why This Page Helps</h2>
+                <ul class="list-unstyled d-flex flex-column gap-2 text-secondary mb-0">
+                    <li>Spot high-visibility scholarships fast</li>
+                    <li>Prioritize popular opportunities</li>
+                    <li>Jump directly into details and comparison</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="row g-4">
+    {% for scholarship in items %}
+        <div class="col-md-6 col-xl-4">
+            {{ scholarship_card(scholarship) }}
+        </div>
+    {% else %}
+        <div class="col-12">
+            <div class="page-panel rounded-5 p-5 text-center text-secondary">
+                Trending scholarships will appear here as activity data grows.
+            </div>
+        </div>
+    {% endfor %}
+</section>
+{% endblock %}

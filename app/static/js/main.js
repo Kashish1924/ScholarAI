@@ -15,6 +15,17 @@ document.addEventListener("DOMContentLoaded", () => {
         localStorage.setItem(key, JSON.stringify(value));
     };
 
+    const setButtonBusyState = (button, isBusy, busyText) => {
+        if (!button) {
+            return;
+        }
+        if (!button.dataset.originalText) {
+            button.dataset.originalText = button.textContent;
+        }
+        button.disabled = isBusy;
+        button.textContent = isBusy ? busyText : button.dataset.originalText;
+    };
+
     const escapeHtml = (value) => String(value || "")
         .replaceAll("&", "&amp;")
         .replaceAll("<", "&lt;")
@@ -186,6 +197,154 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         });
     };
+
+    document.querySelectorAll("[data-copy-text]").forEach((button) => {
+        button.addEventListener("click", async () => {
+            const copyText = button.dataset.copyText || "";
+            try {
+                await navigator.clipboard.writeText(copyText);
+                const originalText = button.textContent;
+                button.textContent = "Copied";
+                window.setTimeout(() => {
+                    button.textContent = originalText;
+                }, 1200);
+            } catch (error) {
+                window.alert("Unable to copy the text automatically.");
+            }
+        });
+    });
+
+    const chatShell = document.querySelector("[data-ai-chat-shell]");
+    const chatForm = document.querySelector("[data-ai-chat-form]");
+    const chatStatus = document.querySelector("[data-ai-chat-status]");
+    const chatInput = document.querySelector("#aiChatMessage");
+
+    const appendChatMessage = (role, title, body) => {
+        if (!chatShell) {
+            return;
+        }
+        const message = document.createElement("div");
+        message.className = "glass-card p-4";
+        message.innerHTML = `
+            <p class="small text-uppercase text-secondary mb-1">${escapeHtml(title)}</p>
+            <p class="${role === "user" ? "mb-0" : "mb-2"}">${escapeHtml(body)}</p>
+        `;
+        chatShell.appendChild(message);
+        message.scrollIntoView({ behavior: "smooth", block: "end" });
+    };
+
+    if (chatForm && chatInput && chatShell) {
+        chatForm.addEventListener("submit", async (event) => {
+            event.preventDefault();
+            const message = chatInput.value.trim();
+            const submitButton = chatForm.querySelector("button[type='submit']");
+            if (!message) {
+                return;
+            }
+
+            appendChatMessage("user", "You", message);
+            chatInput.value = "";
+            setButtonBusyState(submitButton, true, "Sending...");
+            if (chatStatus) {
+                chatStatus.textContent = "Generating placeholder response...";
+            }
+
+            try {
+                const response = await fetch("/api/v1/ai/chat", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        message,
+                        page_context: "general",
+                    }),
+                });
+                const payload = await response.json();
+                const assistantText = payload?.data?.answer || payload?.message || "No response available.";
+                appendChatMessage("assistant", "Assistant", assistantText);
+                if (chatStatus) {
+                    chatStatus.textContent = "Local placeholder mode";
+                }
+            } catch (error) {
+                appendChatMessage(
+                    "assistant",
+                    "Assistant",
+                    "The placeholder assistant could not respond right now. Please try again."
+                );
+                if (chatStatus) {
+                    chatStatus.textContent = "Temporary error";
+                }
+            } finally {
+                setButtonBusyState(submitButton, false, "Sending...");
+            }
+        });
+
+        document.querySelectorAll("[data-chat-prompt]").forEach((button) => {
+            button.addEventListener("click", () => {
+                chatInput.value = button.dataset.chatPrompt || "";
+                chatInput.focus();
+            });
+        });
+    }
+
+    const searchInput = document.querySelector("[data-search-input]");
+    const suggestionPanel = document.querySelector("[data-search-suggestions]");
+    let suggestionTimer = null;
+
+    const hideSuggestions = () => {
+        if (!suggestionPanel) {
+            return;
+        }
+        suggestionPanel.classList.add("d-none");
+        suggestionPanel.innerHTML = "";
+    };
+
+    if (searchInput && suggestionPanel) {
+        searchInput.addEventListener("input", () => {
+            const query = searchInput.value.trim();
+            window.clearTimeout(suggestionTimer);
+            if (query.length < 2) {
+                hideSuggestions();
+                return;
+            }
+
+            suggestionTimer = window.setTimeout(async () => {
+                try {
+                    const response = await fetch(`/api/v1/search/suggestions?q=${encodeURIComponent(query)}`);
+                    const payload = await response.json();
+                    const items = payload?.data || [];
+                    if (!items.length) {
+                        hideSuggestions();
+                        return;
+                    }
+
+                    suggestionPanel.innerHTML = items.map((item) => `
+                        <button class="suggestion-item" type="button" data-suggestion-label="${escapeHtml(item.label)}">
+                            <strong>${escapeHtml(item.label)}</strong>
+                            <span class="suggestion-meta">${escapeHtml(item.type)}${item.meta ? ` · ${escapeHtml(item.meta)}` : ""}</span>
+                        </button>
+                    `).join("");
+                    suggestionPanel.classList.remove("d-none");
+
+                    suggestionPanel.querySelectorAll("[data-suggestion-label]").forEach((button) => {
+                        button.addEventListener("click", () => {
+                            searchInput.value = button.dataset.suggestionLabel || "";
+                            hideSuggestions();
+                        });
+                    });
+                } catch (error) {
+                    hideSuggestions();
+                }
+            }, 220);
+        });
+
+        document.addEventListener("click", (event) => {
+            if (!suggestionPanel.contains(event.target) && event.target !== searchInput) {
+                hideSuggestions();
+            }
+        });
+    }
 
     const themeToggle = document.querySelector("[data-theme-toggle]");
     const applyTheme = (theme) => {

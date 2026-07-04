@@ -26,6 +26,30 @@
     </div>
 </section>
 
+{% if search_helper and raw_filters.keyword %}
+<section class="glass-card rounded-5 p-4 mb-4">
+    <div class="row g-4 align-items-start">
+        <div class="col-lg-8">
+            <p class="text-uppercase small text-secondary mb-2">Natural Language Helper</p>
+            <h2 class="h5 mb-2">How ScholarAI interpreted your query</h2>
+            <p class="text-secondary mb-2">{{ search_helper.summary }}</p>
+            <p class="small text-secondary mb-0">Query: "{{ raw_filters.keyword }}"</p>
+        </div>
+        <div class="col-lg-4">
+            {% if search_helper.signals %}
+                <div class="d-flex flex-column gap-2">
+                    {% for item in search_helper.signals %}
+                        <span class="meta-pill">{{ item }}</span>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-secondary mb-0">No structured signals were extracted yet.</p>
+            {% endif %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
 <section class="row g-4">
     <div class="col-xl-3">
         <aside class="page-panel rounded-5 p-4 sticky-panel">
@@ -33,7 +57,11 @@
             <form method="get" class="d-flex flex-column gap-3">
                 <div>
                     <label class="form-label">Keyword</label>
-                    <input class="form-control" type="text" name="keyword" value="{{ filters.keyword or '' }}" placeholder="CSE, Delhi, girls...">
+                    <div class="position-relative">
+                        <input class="form-control" type="text" name="keyword" value="{{ raw_filters.keyword or '' }}" placeholder="CSE, Delhi, girls..." data-search-input autocomplete="off">
+                        <div class="suggestion-panel d-none" data-search-suggestions></div>
+                    </div>
+                    <div class="small text-secondary mt-2">Try: `scholarships under 3 lakh for Delhi girls`</div>
                 </div>
                 <div>
                     <label class="form-label">Type</label>

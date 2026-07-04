@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}Import Scholarships | ScholarAI{% endblock %}
+
+{% block content %}
+<section class="page-panel rounded-5 p-4">
+    <div class="mb-4">
+        <p class="text-uppercase small text-secondary mb-2">Data Operations</p>
+        <h2 class="h3 mb-1">Import Scholarships from CSV</h2>
+        <p class="text-secondary mb-0">Upload a UTF-8 CSV file with the required headers. Invalid rows will be rejected and reported.</p>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" novalidate class="mb-4">
+        {{ form.hidden_tag() }}
+        <div class="row g-3 align-items-end">
+            <div class="col-md-8">
+                <label class="form-label" for="{{ form.csv_file.id }}">{{ form.csv_file.label.text }}</label>
+                {{ form.csv_file(class="form-control") }}
+                {% for error in form.csv_file.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-md-4 d-grid">
+                <button class="btn btn-primary" type="submit">{{ form.submit.label.text }}</button>
+            </div>
+        </div>
+    </form>
+
+    <div class="mb-4">
+        <h3 class="h5 mb-3">Required CSV Headers</h3>
+        <div class="d-flex flex-wrap gap-2">
+            {% for header in csv_headers %}
+                <span class="meta-pill">{{ header }}</span>
+            {% endfor %}
+        </div>
+    </div>
+
+    {% if import_result %}
+        <div class="page-panel rounded-5 p-4">
+            <h3 class="h5 mb-3">Import Summary</h3>
+            <div class="row g-3 mb-3">
+                <div class="col-md-4"><div class="metric-card"><span class="metric-value">{{ import_result.imported_count }}</span><span class="metric-label">Imported</span></div></div>
+                <div class="col-md-4"><div class="metric-card"><span class="metric-value">{{ import_result.rejected_count }}</span><span class="metric-label">Rejected</span></div></div>
+            </div>
+            {% if import_result.errors %}
+                <div class="table-responsive">
+                    <table class="table table-dark align-middle mb-0">
+                        <thead><tr><th>Row</th><th>Errors</th></tr></thead>
+                        <tbody>
+                            {% for item in import_result.errors %}
+                                <tr>
+                                    <td>{{ item.row }}</td>
+                                    <td>
+                                        {% for field_name, field_errors in item.errors.items() %}
+                                            <div><strong>{{ field_name }}</strong>: {{ field_errors|join(', ') }}</div>
+                                        {% endfor %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+        </div>
+    {% endif %}
+</section>
+{% endblock %}

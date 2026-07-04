@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+
+{% block title %}AI Recommendations | ScholarAI{% endblock %}
+
+{% block content %}
+<section class="page-panel rounded-5 p-4 p-lg-5 mb-4">
+    <div class="row g-4 align-items-start">
+        <div class="col-lg-8">
+            <p class="text-uppercase small text-secondary mb-2">AI Recommendations</p>
+            <h1 class="h2 mb-3">Recommendation experience with deterministic backend scoring.</h1>
+            <p class="text-secondary mb-0">
+                This page feels AI-assisted, but the matching still comes from backend eligibility rules.
+                The explanation layer is a safe placeholder until Gemini is integrated later.
+            </p>
+        </div>
+        <div class="col-lg-4">
+            <div class="glass-card p-4 h-100">
+                <h2 class="h5 mb-3">What You Get</h2>
+                <ul class="list-unstyled mb-0 text-secondary d-flex flex-column gap-2">
+                    <li>Ranked scholarship matches</li>
+                    <li>Why each match was selected</li>
+                    <li>Suggested next steps</li>
+                    <li>Zero dependency on live AI APIs</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="row g-4">
+    <div class="col-xl-4">
+        <aside class="page-panel rounded-5 p-4 sticky-panel">
+            <h2 class="h5 mb-3">Your Profile</h2>
+            <form method="get" class="d-flex flex-column gap-3">
+                <div>
+                    <label class="form-label">Family Income</label>
+                    <input class="form-control" type="number" step="0.01" name="income" value="{{ request.args.get('income', '') }}" placeholder="300000">
+                    {% for error in errors.get('income', []) %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                </div>
+                <div>
+                    <label class="form-label">CGPA</label>
+                    <input class="form-control" type="number" step="0.01" name="cgpa" value="{{ request.args.get('cgpa', '') }}" placeholder="7.5">
+                    {% for error in errors.get('cgpa', []) %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                </div>
+                <div>
+                    <label class="form-label">Category</label>
+                    <select class="form-select" name="category_slug">
+                        <option value="">Select category</option>
+                        {% for category in filters.categories %}
+                            <option value="{{ category.slug }}" {% if request.args.get('category_slug') == category.slug %}selected{% endif %}>{{ category.name }}</option>
+                        {% endfor %}
+                    </select>
+                    {% for error in errors.get('category_slug', []) %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                </div>
+                <div>
+                    <label class="form-label">State</label>
+                    <select class="form-select" name="state_code">
+                        <option value="">Select state</option>
+                        {% for state in filters.states %}
+                            <option value="{{ state.code }}" {% if request.args.get('state_code') == state.code %}selected{% endif %}>{{ state.name }} ({{ state.code }})</option>
+                        {% endfor %}
+                    </select>
+                    {% for error in errors.get('state_code', []) %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                </div>
+                <div class="row g-3">
+                    <div class="col-6">
+                        <label class="form-label">Gender</label>
+                        <select class="form-select" name="gender">
+                            <option value="">Select</option>
+                            {% for gender in filters.genders %}
+                                <option value="{{ gender }}" {% if request.args.get('gender') == gender %}selected{% endif %}>{{ gender|capitalize }}</option>
+                            {% endfor %}
+                        </select>
+                        {% for error in errors.get('gender', []) %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label">Academic Year</label>
+                        <select class="form-select" name="academic_year">
+                            <option value="">Select</option>
+                            {% for item in filters.academic_years %}
+                                <option value="{{ item }}" {% if request.args.get('academic_year') == item %}selected{% endif %}>{{ item|upper }}</option>
+                            {% endfor %}
+                        </select>
+                        {% for error in errors.get('academic_year', []) %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                    </div>
+                </div>
+                <div>
+                    <label class="form-label">Degree</label>
+                    <input class="form-control" type="text" name="degree" value="{{ request.args.get('degree', 'B.Tech') }}" placeholder="B.Tech">
+                    {% for error in errors.get('degree', []) %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                </div>
+                <div>
+                    <label class="form-label">Branch</label>
+                    <input class="form-control" type="text" name="branch" value="{{ request.args.get('branch', '') }}" placeholder="CSE">
+                    {% for error in errors.get('branch', []) %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                </div>
+                <div class="row g-2">
+                    <div class="col-6"><div class="form-check"><input class="form-check-input" type="checkbox" name="minority" value="true" {% if request.args.get('minority') == 'true' %}checked{% endif %}> <label class="form-check-label">Minority</label></div></div>
+                    <div class="col-6"><div class="form-check"><input class="form-check-input" type="checkbox" name="disability" value="true" {% if request.args.get('disability') == 'true' %}checked{% endif %}> <label class="form-check-label">Disability</label></div></div>
+                    <div class="col-6"><div class="form-check"><input class="form-check-input" type="checkbox" name="hosteller" value="true" {% if request.args.get('hosteller') == 'true' %}checked{% endif %}> <label class="form-check-label">Hosteller</label></div></div>
+                    <div class="col-6"><div class="form-check"><input class="form-check-input" type="checkbox" name="day_scholar" value="true" {% if request.args.get('day_scholar') == 'true' %}checked{% endif %}> <label class="form-check-label">Day Scholar</label></div></div>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-primary flex-grow-1" type="submit">Get Recommendations</button>
+                    <a class="btn btn-outline-light" href="{{ url_for('student.ai_recommendations') }}">Reset</a>
+                </div>
+            </form>
+        </aside>
+    </div>
+    <div class="col-xl-8">
+        {% if result %}
+            <div class="page-panel rounded-5 p-4 mb-4">
+                <div class="row g-3 mb-4">
+                    <div class="col-md-4"><div class="metric-card"><span class="metric-value">{{ result.counts.recommended_matches }}</span><span class="metric-label">Recommended Matches</span></div></div>
+                    <div class="col-md-4"><div class="metric-card"><span class="metric-value">{{ result.counts.eligible }}</span><span class="metric-label">Fully Eligible</span></div></div>
+                    <div class="col-md-4"><div class="metric-card"><span class="metric-value">{{ result.counts.partially_eligible }}</span><span class="metric-label">Partial Matches</span></div></div>
+                </div>
+                <div class="glass-card p-4">
+                    <p class="text-uppercase small text-secondary mb-1">AI Explanation Placeholder</p>
+                    <h2 class="h5 mb-2">Recommendation narrative</h2>
+                    <p class="text-secondary mb-3">{{ result.ai_explanation.summary }}</p>
+                    <ul class="text-secondary mb-0">
+                        {% for item in result.ai_explanation.next_steps %}
+                            <li>{{ item }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+
+            <div class="d-flex flex-column gap-4">
+                {% for item in result.recommended_results %}
+                    <div class="page-panel rounded-5 p-4">
+                        <div class="d-flex justify-content-between flex-wrap gap-3 mb-3">
+                            <div>
+                                <p class="small text-uppercase text-secondary mb-1">{{ item.status_label|replace('_', ' ') }}</p>
+                                <h2 class="h4 mb-1">{{ item.scholarship.scholarship_name }}</h2>
+                                <p class="text-secondary mb-0">{{ item.scholarship.provider_name }}</p>
+                            </div>
+                            <div class="text-end">
+                                <div class="metric-value">{{ item.eligibility_score }}/100</div>
+                                <div class="metric-label">Match Score</div>
+                            </div>
+                        </div>
+                        <div class="d-flex flex-wrap gap-2 mb-3">
+                            <span class="meta-pill">Income {{ item.match_breakdown.income_match }}</span>
+                            <span class="meta-pill">Category {{ item.match_breakdown.category_match }}</span>
+                            <span class="meta-pill">State {{ item.match_breakdown.state_match }}</span>
+                            <span class="meta-pill">CGPA {{ item.match_breakdown.cgpa_match }}</span>
+                        </div>
+                        <ul class="text-secondary mb-4">
+                            {% for point in item.explanation_points %}
+                                <li>{{ point }}</li>
+                            {% endfor %}
+                        </ul>
+                        <div class="d-flex flex-wrap gap-2">
+                            <a class="btn btn-primary" href="{{ url_for('student.scholarship_detail', slug=item.scholarship.slug) }}">Open Scholarship</a>
+                            <a class="btn btn-outline-light" href="{{ item.scholarship.application_link }}" target="_blank" rel="noopener noreferrer">Apply Now</a>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% elif submitted %}
+            <div class="page-panel rounded-5 p-5 text-center">
+                <h2 class="h4 mb-2">No recommendation matches yet.</h2>
+                <p class="text-secondary mb-0">Try widening your profile inputs and run the recommendation engine again.</p>
+            </div>
+        {% else %}
+            <div class="page-panel rounded-5 p-5 text-center">
+                <h2 class="h4 mb-2">Build your recommendation list.</h2>
+                <p class="text-secondary mb-0">Enter your profile and we’ll rank scholarships using backend eligibility logic first.</p>
+            </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}
