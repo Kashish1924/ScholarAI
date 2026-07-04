@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}Bookmarks | ScholarAI{% endblock %}
+
+{% block content %}
+<section class="page-panel rounded-5 p-4 p-lg-5">
+    <div class="d-flex justify-content-between flex-wrap gap-3 align-items-start mb-4">
+        <div>
+            <p class="text-uppercase small text-secondary mb-2">Saved Locally</p>
+            <h1 class="h2 mb-2">Your Bookmarked Scholarships</h1>
+            <p class="text-secondary mb-0">Bookmarks are stored in your browser, so no student login is required.</p>
+        </div>
+        <a class="btn btn-outline-light" href="{{ url_for('student.scholarships') }}">Browse More</a>
+    </div>
+    <div class="row g-4" data-bookmarks-grid></div>
+    <div class="page-panel rounded-5 p-5 text-center empty-browser-state d-none" data-bookmarks-empty>
+        <h2 class="h4 mb-2">No bookmarks yet.</h2>
+        <p class="text-secondary mb-3">Save scholarships from the listing or detail pages to build your shortlist.</p>
+        <a class="btn btn-primary" href="{{ url_for('student.scholarships') }}">Explore Scholarships</a>
+    </div>
+</section>
+{% endblock %}

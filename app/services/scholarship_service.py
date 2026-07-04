@@ -53,6 +53,14 @@ class ScholarshipService:
         ).filter_by(scholarship_id=scholarship_id).first()
 
     @staticmethod
+    def get_scholarship_by_slug(slug: str) -> Scholarship | None:
+        """Return a scholarship by slug."""
+        return Scholarship.query.options(
+            selectinload(Scholarship.categories).selectinload(ScholarshipCategory.category),
+            selectinload(Scholarship.states).selectinload(ScholarshipState.state),
+        ).filter_by(slug=slug).first()
+
+    @staticmethod
     def create_scholarship(payload: dict) -> Scholarship:
         """Validate and persist a scholarship record."""
         clean_payload = ScholarshipValidator.validate_create_payload(payload)
@@ -95,6 +103,124 @@ class ScholarshipService:
             .limit(max(limit, 1))
             .all()
         )
+
+    @staticmethod
+    def get_homepage_sections() -> dict:
+        """Return featured homepage scholarship sections."""
+        featured = (
+            Scholarship.query.filter_by(status="published", is_featured=True)
+            .order_by(Scholarship.trending_score.desc(), Scholarship.created_at.desc())
+            .limit(4)
+            .all()
+        )
+        trending = (
+            Scholarship.query.filter_by(status="published")
+            .order_by(Scholarship.trending_score.desc(), Scholarship.view_count.desc())
+            .limit(4)
+            .all()
+        )
+        closing_soon = (
+            Scholarship.query.filter(
+                Scholarship.status == "published",
+                Scholarship.application_end_date >= date.today(),
+            )
+            .order_by(Scholarship.application_end_date.asc())
+            .limit(4)
+            .all()
+        )
+        latest = (
+            Scholarship.query.filter_by(status="published")
+            .order_by(Scholarship.created_at.desc())
+            .limit(4)
+            .all()
+        )
+
+        return {
+            "featured": [ScholarshipService.serialize_scholarship(item) for item in featured],
+            "trending": [ScholarshipService.serialize_scholarship(item) for item in trending],
+            "closing_soon": [ScholarshipService.serialize_scholarship(item) for item in closing_soon],
+            "latest": [ScholarshipService.serialize_scholarship(item) for item in latest],
+            "stats": {
+                "published_count": Scholarship.query.filter_by(status="published").count(),
+                "government_count": Scholarship.query.filter_by(
+                    status="published",
+                    scholarship_type="government",
+                ).count(),
+                "private_count": Scholarship.query.filter_by(
+                    status="published",
+                    scholarship_type="private",
+                ).count(),
+                "featured_count": Scholarship.query.filter_by(
+                    status="published",
+                    is_featured=True,
+                ).count(),
+            },
+        }
+
+    @staticmethod
+    def get_comparison_data(scholarship_ids: list[int]) -> list[dict]:
+        """Return serialized scholarships for comparison."""
+        if not scholarship_ids:
+            return []
+
+        scholarships = (
+            Scholarship.query.options(
+                selectinload(Scholarship.categories).selectinload(ScholarshipCategory.category),
+                selectinload(Scholarship.states).selectinload(ScholarshipState.state),
+            )
+            .filter(Scholarship.scholarship_id.in_(scholarship_ids))
+            .limit(3)
+            .all()
+        )
+        order_map = {item_id: index for index, item_id in enumerate(scholarship_ids)}
+        scholarships.sort(key=lambda item: order_map.get(item.scholarship_id, 999))
+        return [ScholarshipService.serialize_scholarship(item) for item in scholarships]
+
+    @staticmethod
+    def get_filter_options() -> dict:
+        """Return lookup and suggestion values for filter UIs."""
+        return {
+            "scholarship_types": ["government", "private"],
+            "genders": ["all", "female", "male", "other"],
+            "degrees": sorted(
+                {
+                    item[0]
+                    for item in Scholarship.query.with_entities(Scholarship.degree)
+                    .filter(Scholarship.degree.isnot(None))
+                    .distinct()
+                    .all()
+                    if item[0]
+                }
+            ),
+            "branches": sorted(
+                {
+                    item[0]
+                    for item in Scholarship.query.with_entities(Scholarship.branch)
+                    .filter(Scholarship.branch.isnot(None))
+                    .distinct()
+                    .all()
+                    if item[0]
+                }
+            ),
+            "academic_years": sorted(
+                {
+                    item[0]
+                    for item in Scholarship.query.with_entities(Scholarship.academic_year)
+                    .filter(Scholarship.academic_year.isnot(None))
+                    .distinct()
+                    .all()
+                    if item[0]
+                }
+            ),
+            "categories": [
+                {"category_id": item.category_id, "name": item.name, "slug": item.slug}
+                for item in Category.query.filter_by(is_active=True).order_by(Category.name.asc()).all()
+            ],
+            "states": [
+                {"state_id": item.state_id, "name": item.name, "code": item.code}
+                for item in State.query.filter_by(is_active=True).order_by(State.name.asc()).all()
+            ],
+        }
 
     @staticmethod
     def serialize_scholarship(scholarship: Scholarship) -> dict:

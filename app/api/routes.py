@@ -1,5 +1,7 @@
 from flask import Blueprint, request
 
+from app.services.analytics_service import AnalyticsService
+from app.services.content_service import ContentService
 from app.services.scholarship_service import ScholarshipService
 from app.utils.api import error_response, success_response
 from app.utils.validation import ValidationError
@@ -43,6 +45,38 @@ def list_scholarships():
     return success_response(
         message="Scholarships fetched successfully.",
         data=result,
+    )
+
+
+@api_bp.get("/search")
+def search_scholarships():
+    """Alias endpoint for search-driven clients."""
+    filters = {
+        "keyword": request.args.get("q", type=str) or request.args.get("keyword", type=str),
+        "scholarship_type": request.args.get("scholarship_type", type=str),
+        "state_code": request.args.get("state_code", type=str),
+        "category_slug": request.args.get("category_slug", type=str),
+        "gender": request.args.get("gender", type=str),
+        "degree": request.args.get("degree", type=str),
+        "branch": request.args.get("branch", type=str),
+        "academic_year": request.args.get("academic_year", type=str),
+        "max_income": request.args.get("max_income", type=float),
+        "min_cgpa": request.args.get("min_cgpa", type=float),
+        "deadline_within_days": request.args.get("deadline_within_days", type=int),
+        "status": request.args.get("status", default="published", type=str),
+    }
+    page = request.args.get("page", default=1, type=int)
+    per_page = request.args.get("per_page", default=10, type=int)
+    result = ScholarshipService.list_scholarships(filters=filters, page=page, per_page=per_page)
+    return success_response("Search results fetched successfully.", data=result)
+
+
+@api_bp.get("/filters")
+def get_filter_options():
+    """Return reusable filter options for frontend clients."""
+    return success_response(
+        "Filter options fetched successfully.",
+        data=ScholarshipService.get_filter_options(),
     )
 
 
@@ -115,3 +149,114 @@ def delete_scholarship(scholarship_id: int):
         return error_response("Scholarship not found.", status_code=404)
 
     return success_response(message="Scholarship deleted successfully.", data=None)
+
+
+@api_bp.get("/comparison")
+def comparison_preview():
+    """Return comparison payload for selected scholarship ids."""
+    raw_ids = request.args.get("ids", "")
+    scholarship_ids = _parse_id_list(raw_ids)
+    if not scholarship_ids:
+        return error_response(
+            "At least one scholarship id is required.",
+            errors={"ids": ["Provide comma-separated scholarship ids."]},
+            status_code=422,
+        )
+
+    items = ScholarshipService.get_comparison_data(scholarship_ids[:3])
+    return success_response(
+        "Comparison data fetched successfully.",
+        data={"items": items, "selected_ids": scholarship_ids[:3]},
+    )
+
+
+@api_bp.post("/comparison")
+def comparison_preview_post():
+    """Return comparison payload from JSON body."""
+    payload = request.get_json(silent=True)
+    if payload is None:
+        return error_response("Request body must be valid JSON.", status_code=400)
+
+    scholarship_ids = payload.get("scholarship_ids", [])
+    if not isinstance(scholarship_ids, list) or not scholarship_ids:
+        return error_response(
+            "Comparison validation failed.",
+            errors={"scholarship_ids": ["Provide a non-empty list of scholarship ids."]},
+            status_code=422,
+        )
+
+    clean_ids = [int(item) for item in scholarship_ids if str(item).isdigit()][:3]
+    if not clean_ids:
+        return error_response(
+            "Comparison validation failed.",
+            errors={"scholarship_ids": ["No valid scholarship ids were provided."]},
+            status_code=422,
+        )
+
+    items = ScholarshipService.get_comparison_data(clean_ids)
+    return success_response(
+        "Comparison data fetched successfully.",
+        data={"items": items, "selected_ids": clean_ids},
+    )
+
+
+@api_bp.get("/trending")
+def trending_scholarships():
+    """Return trending scholarships."""
+    items = ScholarshipService.get_homepage_sections()["trending"]
+    return success_response("Trending scholarships fetched successfully.", data=items)
+
+
+@api_bp.get("/deadlines")
+def deadline_scholarships():
+    """Return scholarships closing within a requested number of days."""
+    days = request.args.get("within_days", default=7, type=int)
+    result = ScholarshipService.list_scholarships(
+        filters={"deadline_within_days": max(days, 0), "status": "published"},
+        page=1,
+        per_page=min(request.args.get("per_page", default=10, type=int), 50),
+    )
+    return success_response("Deadline scholarships fetched successfully.", data=result)
+
+
+@api_bp.get("/news")
+def list_news():
+    """Return published news records."""
+    page = request.args.get("page", default=1, type=int)
+    per_page = request.args.get("per_page", default=10, type=int)
+    data = ContentService.list_news(page=page, per_page=per_page, published_only=True)
+    return success_response("News fetched successfully.", data=data)
+
+
+@api_bp.get("/faqs")
+def list_faqs():
+    """Return published FAQs."""
+    data = ContentService.list_faqs(published_only=True)
+    return success_response("FAQs fetched successfully.", data=data)
+
+
+@api_bp.get("/notifications")
+def list_notifications():
+    """Return active notifications."""
+    audience_type = request.args.get("audience_type", default="all", type=str)
+    data = ContentService.list_active_notifications(audience_type=audience_type)
+    return success_response("Notifications fetched successfully.", data=data)
+
+
+@api_bp.get("/analytics")
+def analytics_summary():
+    """Return admin analytics summary payload."""
+    return success_response(
+        "Analytics fetched successfully.",
+        data=AnalyticsService.get_dashboard_analytics(),
+    )
+
+
+def _parse_id_list(raw_ids: str) -> list[int]:
+    """Parse comma-separated ids into integers."""
+    parsed = []
+    for item in (raw_ids or "").split(","):
+        cleaned = item.strip()
+        if cleaned.isdigit():
+            parsed.append(int(cleaned))
+    return parsed

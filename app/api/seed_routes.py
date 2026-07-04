@@ -8,6 +8,44 @@ from app.utils.api import error_response, success_response
 seed_bp = Blueprint("seed", __name__)
 
 
+@seed_bp.get("/taxonomy/categories")
+def list_categories():
+    """Return category taxonomy records."""
+    categories = Category.query.order_by(Category.name.asc()).all()
+    return success_response(
+        "Categories fetched successfully.",
+        data=[
+            {
+                "category_id": category.category_id,
+                "name": category.name,
+                "slug": category.slug,
+                "description": category.description,
+                "is_active": category.is_active,
+            }
+            for category in categories
+        ],
+    )
+
+
+@seed_bp.get("/taxonomy/states")
+def list_states():
+    """Return state taxonomy records."""
+    states = State.query.order_by(State.name.asc()).all()
+    return success_response(
+        "States fetched successfully.",
+        data=[
+            {
+                "state_id": state.state_id,
+                "name": state.name,
+                "code": state.code,
+                "is_union_territory": state.is_union_territory,
+                "is_active": state.is_active,
+            }
+            for state in states
+        ],
+    )
+
+
 @seed_bp.post("/taxonomy/categories")
 def create_category():
     """Create a category lookup record."""

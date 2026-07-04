@@ -1,13 +1,146 @@
 {% extends "base.html" %}
+{% from "partials/student_cards.html" import scholarship_card %}
 
 {% block title %}Scholarships | ScholarAI{% endblock %}
 
 {% block content %}
-<section class="page-panel rounded-4 p-4">
-    <h2 class="h3 mb-3">Scholarship Discovery</h2>
-    <p class="text-secondary mb-0">
-        This page is intentionally scaffolded for the upcoming student module, where we will add
-        real scholarship data, filters, natural language search, bookmarking, and comparison.
-    </p>
+<section class="page-panel rounded-5 p-4 p-lg-5 mb-4">
+    <div class="row g-4 align-items-end">
+        <div class="col-lg-7">
+            <p class="text-uppercase small text-secondary mb-2">Scholarship Discovery</p>
+            <h1 class="display-6 mb-3">Filter scholarships like a real product, not a spreadsheet.</h1>
+            <p class="text-secondary mb-0">
+                Search by provider, branch, state, type, income, CGPA, and deadline. Save promising options
+                locally and compare them without creating an account.
+            </p>
+        </div>
+        <div class="col-lg-5">
+            <div class="compare-banner">
+                <span class="small text-secondary">Comparison tray</span>
+                <div class="d-flex justify-content-between align-items-center gap-3 mt-2">
+                    <strong><span data-compare-count>0</span> selected</strong>
+                    <a class="btn btn-sm btn-outline-light disabled" data-compare-link href="{{ url_for('student.compare') }}">Open Compare</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="row g-4">
+    <div class="col-xl-3">
+        <aside class="page-panel rounded-5 p-4 sticky-panel">
+            <h2 class="h5 mb-3">Filters</h2>
+            <form method="get" class="d-flex flex-column gap-3">
+                <div>
+                    <label class="form-label">Keyword</label>
+                    <input class="form-control" type="text" name="keyword" value="{{ filters.keyword or '' }}" placeholder="CSE, Delhi, girls...">
+                </div>
+                <div>
+                    <label class="form-label">Type</label>
+                    <select class="form-select" name="scholarship_type">
+                        <option value="">All</option>
+                        <option value="government" {% if filters.scholarship_type == 'government' %}selected{% endif %}>Government</option>
+                        <option value="private" {% if filters.scholarship_type == 'private' %}selected{% endif %}>Private</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label">State Code</label>
+                    <input class="form-control" type="text" name="state_code" value="{{ filters.state_code or '' }}" placeholder="DL">
+                </div>
+                <div>
+                    <label class="form-label">Category Slug</label>
+                    <input class="form-control" type="text" name="category_slug" value="{{ filters.category_slug or '' }}" placeholder="obc">
+                </div>
+                <div class="row g-3">
+                    <div class="col-6">
+                        <label class="form-label">Gender</label>
+                        <select class="form-select" name="gender">
+                            <option value="">All</option>
+                            <option value="female" {% if filters.gender == 'female' %}selected{% endif %}>Female</option>
+                            <option value="male" {% if filters.gender == 'male' %}selected{% endif %}>Male</option>
+                            <option value="other" {% if filters.gender == 'other' %}selected{% endif %}>Other</option>
+                        </select>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label">Year</label>
+                        <select class="form-select" name="academic_year">
+                            <option value="">Any</option>
+                            <option value="1" {% if filters.academic_year == '1' %}selected{% endif %}>1</option>
+                            <option value="2" {% if filters.academic_year == '2' %}selected{% endif %}>2</option>
+                            <option value="3" {% if filters.academic_year == '3' %}selected{% endif %}>3</option>
+                            <option value="4" {% if filters.academic_year == '4' %}selected{% endif %}>4</option>
+                            <option value="all" {% if filters.academic_year == 'all' %}selected{% endif %}>All</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="form-label">Degree</label>
+                    <input class="form-control" type="text" name="degree" value="{{ filters.degree or '' }}" placeholder="B.Tech">
+                </div>
+                <div>
+                    <label class="form-label">Branch</label>
+                    <input class="form-control" type="text" name="branch" value="{{ filters.branch or '' }}" placeholder="CSE">
+                </div>
+                <div class="row g-3">
+                    <div class="col-6">
+                        <label class="form-label">Max Income</label>
+                        <input class="form-control" type="number" step="0.01" name="max_income" value="{{ filters.max_income or '' }}" placeholder="300000">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label">Your CGPA</label>
+                        <input class="form-control" type="number" step="0.01" name="min_cgpa" value="{{ filters.min_cgpa or '' }}" placeholder="7.5">
+                    </div>
+                </div>
+                <div>
+                    <label class="form-label">Deadline Within (Days)</label>
+                    <select class="form-select" name="deadline_within_days">
+                        <option value="">Any time</option>
+                        <option value="7" {% if filters.deadline_within_days == 7 %}selected{% endif %}>7 days</option>
+                        <option value="30" {% if filters.deadline_within_days == 30 %}selected{% endif %}>30 days</option>
+                        <option value="60" {% if filters.deadline_within_days == 60 %}selected{% endif %}>60 days</option>
+                    </select>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-primary flex-grow-1" type="submit">Apply Filters</button>
+                    <a class="btn btn-outline-light" href="{{ url_for('student.scholarships') }}">Reset</a>
+                </div>
+            </form>
+        </aside>
+    </div>
+    <div class="col-xl-9">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+            <div>
+                <h2 class="h4 mb-1">Results</h2>
+                <p class="text-secondary mb-0">{{ result.pagination.total_items }} scholarships found</p>
+            </div>
+            <div class="d-flex gap-2">
+                <a class="btn btn-outline-light btn-sm" href="{{ url_for('student.bookmarks') }}">View Bookmarks</a>
+                <a class="btn btn-outline-light btn-sm" href="{{ url_for('student.eligibility_checker') }}">Eligibility Checker</a>
+            </div>
+        </div>
+        <div class="row g-4">
+            {% for scholarship in result.items %}
+                <div class="col-md-6 col-xl-4">{{ scholarship_card(scholarship) }}</div>
+            {% else %}
+                <div class="col-12">
+                    <div class="page-panel rounded-5 p-5 text-center">
+                        <h3 class="h4 mb-2">No scholarships match these filters.</h3>
+                        <p class="text-secondary mb-0">Try broadening your state, income, or category filters.</p>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        {% if result.pagination.total_pages > 1 %}
+            <nav class="mt-4" aria-label="Scholarship pagination">
+                <ul class="pagination pagination-dark flex-wrap gap-2">
+                    {% for page_number in range(1, result.pagination.total_pages + 1) %}
+                        <li class="page-item {% if page_number == result.pagination.page %}active{% endif %}">
+                            <a class="page-link" href="{{ url_for('student.scholarships', page=page_number, keyword=filters.keyword, scholarship_type=filters.scholarship_type, state_code=filters.state_code, category_slug=filters.category_slug, gender=filters.gender, degree=filters.degree, branch=filters.branch, academic_year=filters.academic_year, max_income=filters.max_income, min_cgpa=filters.min_cgpa, deadline_within_days=filters.deadline_within_days) }}">{{ page_number }}</a>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </nav>
+        {% endif %}
+    </div>
 </section>
 {% endblock %}

@@ -3,29 +3,173 @@
 {% block title %}ScholarAI | Smart Scholarship Finder{% endblock %}
 
 {% block content %}
-<section class="hero-section p-4 p-md-5 rounded-4">
+<section class="hero-section p-4 p-md-5 rounded-5 mb-4">
     <div class="row align-items-center g-4">
         <div class="col-lg-7">
-            <span class="badge rounded-pill text-bg-light mb-3">For Indian B.Tech students</span>
-            <h1 class="display-5 fw-semibold">Find the right scholarships without searching dozens of websites.</h1>
+            <span class="badge rounded-pill hero-badge mb-3">For Indian B.Tech students</span>
+            <h1 class="display-4 fw-semibold">Scholarship search that feels focused, fast, and explainable.</h1>
             <p class="lead text-secondary mt-3">
-                ScholarAI combines structured backend eligibility logic with AI-ready explanations,
-                so students get relevant matches with clear reasoning.
+                Stop jumping across websites. Explore scholarships by income, state, category,
+                branch, deadlines, and eligibility signals from one place.
             </p>
+            <form action="{{ url_for('student.scholarships') }}" method="get" class="search-shell mt-4">
+                <div class="row g-2 align-items-center">
+                    <div class="col-lg-8">
+                        <input
+                            type="text"
+                            class="form-control form-control-lg search-input"
+                            name="keyword"
+                            placeholder="Search scholarships for Delhi girls, CSE students, low-income families..."
+                        >
+                    </div>
+                    <div class="col-sm-6 col-lg-2">
+                        <select class="form-select form-select-lg" name="scholarship_type">
+                            <option value="">All Types</option>
+                            <option value="government">Government</option>
+                            <option value="private">Private</option>
+                        </select>
+                    </div>
+                    <div class="col-sm-6 col-lg-2">
+                        <button class="btn btn-primary btn-lg w-100" type="submit">Search</button>
+                    </div>
+                </div>
+            </form>
             <div class="d-flex flex-wrap gap-3 mt-4">
-                <a class="btn btn-primary btn-lg" href="{{ url_for('student.scholarships') }}">Explore Scholarships</a>
-                <a class="btn btn-outline-light btn-lg" href="{{ url_for('admin.login') }}">Admin Access</a>
+                <a class="btn btn-outline-light" href="{{ url_for('student.eligibility_checker') }}">Eligibility Checker</a>
+                <a class="btn btn-outline-light" href="{{ url_for('student.bookmarks') }}">Bookmarks</a>
+                <a class="btn btn-outline-light" href="{{ url_for('student.compare') }}">Compare</a>
             </div>
         </div>
         <div class="col-lg-5">
-            <div class="glass-card p-4">
-                <p class="small text-uppercase text-secondary mb-2">Module 1 Scaffold</p>
-                <ul class="list-unstyled mb-0">
-                    <li class="mb-2"><i class="bi bi-check2-circle me-2 text-success"></i>App factory architecture</li>
-                    <li class="mb-2"><i class="bi bi-check2-circle me-2 text-success"></i>Blueprint separation</li>
-                    <li class="mb-2"><i class="bi bi-check2-circle me-2 text-success"></i>AI placeholder services</li>
-                    <li><i class="bi bi-check2-circle me-2 text-success"></i>Bootstrap-ready base layout</li>
-                </ul>
+            <div class="glass-card p-4 hero-stat-panel">
+                <p class="small text-uppercase text-secondary mb-3">Portal Snapshot</p>
+                <div class="row g-3">
+                    <div class="col-6">
+                        <div class="metric-card">
+                            <span class="metric-value">{{ sections.stats.published_count }}</span>
+                            <span class="metric-label">Published</span>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="metric-card">
+                            <span class="metric-value">{{ sections.stats.featured_count }}</span>
+                            <span class="metric-label">Featured</span>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="metric-card">
+                            <span class="metric-value">{{ sections.stats.government_count }}</span>
+                            <span class="metric-label">Government</span>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="metric-card">
+                            <span class="metric-value">{{ sections.stats.private_count }}</span>
+                            <span class="metric-label">Private</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="row g-4 mb-4">
+    <div class="col-lg-4">
+        <div class="page-panel rounded-5 p-4 h-100">
+            <p class="text-uppercase small text-secondary mb-2">How It Works</p>
+            <h2 class="h4 mb-3">Backend-first recommendations</h2>
+            <p class="text-secondary mb-0">
+                ScholarAI uses structured scholarship records and eligibility filters first.
+                AI explanations are optional later, not the source of truth.
+            </p>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="page-panel rounded-5 p-4 h-100">
+            <p class="text-uppercase small text-secondary mb-2">Compare Faster</p>
+            <h2 class="h4 mb-3">Shortlist with bookmarks and comparison</h2>
+            <p class="text-secondary mb-0">
+                Save scholarships locally without login, then compare amount, deadline, eligibility,
+                and benefits side by side.
+            </p>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="page-panel rounded-5 p-4 h-100">
+            <p class="text-uppercase small text-secondary mb-2">Deadline Awareness</p>
+            <h2 class="h4 mb-3">Catch scholarships before they close</h2>
+            <p class="text-secondary mb-0">
+                Browse closing-soon opportunities and follow practical filters like family income,
+                branch, year, and gender-specific schemes.
+            </p>
+        </div>
+    </div>
+</section>
+
+{% from "partials/student_cards.html" import scholarship_card %}
+
+<section class="mb-4">
+    <div class="section-heading mb-3">
+        <div>
+            <p class="text-uppercase small text-secondary mb-1">Featured</p>
+            <h2 class="h3 mb-0">Highlighted Scholarships</h2>
+        </div>
+        <a class="btn btn-outline-light btn-sm" href="{{ url_for('student.scholarships') }}">View all</a>
+    </div>
+    <div class="row g-4">
+        {% for scholarship in sections.featured %}
+            <div class="col-lg-3 col-md-6">{{ scholarship_card(scholarship) }}</div>
+        {% else %}
+            <div class="col-12"><div class="page-panel rounded-5 p-4 text-secondary">Featured scholarships will appear here once records are published.</div></div>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="row g-4 mb-4">
+    <div class="col-xl-6">
+        <div class="page-panel rounded-5 p-4 h-100">
+            <div class="section-heading mb-3">
+                <div>
+                    <p class="text-uppercase small text-secondary mb-1">Closing Soon</p>
+                    <h2 class="h4 mb-0">Act Before Deadlines</h2>
+                </div>
+            </div>
+            <div class="d-flex flex-column gap-3">
+                {% for scholarship in sections.closing_soon %}
+                    <a class="mini-scholarship-card text-decoration-none" href="{{ url_for('student.scholarship_detail', slug=scholarship.slug) }}">
+                        <div>
+                            <h3 class="h6 mb-1 text-white">{{ scholarship.scholarship_name }}</h3>
+                            <p class="small text-secondary mb-0">{{ scholarship.provider_name }}</p>
+                        </div>
+                        <span class="badge deadline-badge">{{ scholarship.application_end_date }}</span>
+                    </a>
+                {% else %}
+                    <p class="text-secondary mb-0">No closing-soon scholarships available yet.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-6">
+        <div class="page-panel rounded-5 p-4 h-100">
+            <div class="section-heading mb-3">
+                <div>
+                    <p class="text-uppercase small text-secondary mb-1">Trending</p>
+                    <h2 class="h4 mb-0">Most Watched Scholarships</h2>
+                </div>
+            </div>
+            <div class="d-flex flex-column gap-3">
+                {% for scholarship in sections.trending %}
+                    <a class="mini-scholarship-card text-decoration-none" href="{{ url_for('student.scholarship_detail', slug=scholarship.slug) }}">
+                        <div>
+                            <h3 class="h6 mb-1 text-white">{{ scholarship.scholarship_name }}</h3>
+                            <p class="small text-secondary mb-0">{{ scholarship.provider_name }}</p>
+                        </div>
+                        <span class="badge trend-badge">Score {{ scholarship.trending_score }}</span>
+                    </a>
+                {% else %}
+                    <p class="text-secondary mb-0">Trending scholarships will appear here once usage data grows.</p>
+                {% endfor %}
             </div>
         </div>
     </div>

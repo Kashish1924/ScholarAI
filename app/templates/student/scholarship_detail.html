@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% from "partials/student_cards.html" import scholarship_card %}
+
+{% block title %}{{ scholarship.scholarship_name }} | ScholarAI{% endblock %}
+
+{% block content %}
+<section class="row g-4">
+    <div class="col-lg-8">
+        <div class="page-panel rounded-5 p-4 p-lg-5 h-100">
+            <div class="d-flex justify-content-between align-items-start gap-3 mb-4">
+                <div>
+                    <span class="badge rounded-pill card-badge text-capitalize">{{ scholarship.scholarship_type }}</span>
+                    <h1 class="display-6 mt-3 mb-2">{{ scholarship.scholarship_name }}</h1>
+                    <p class="text-secondary mb-0">{{ scholarship.provider_name }}</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="icon-toggle bookmark-toggle" type="button" data-bookmark-toggle data-scholarship-card data-scholarship-id="{{ scholarship.scholarship_id }}" data-scholarship-name="{{ scholarship.scholarship_name }}" data-scholarship-slug="{{ scholarship.slug }}" data-scholarship-provider="{{ scholarship.provider_name }}" data-scholarship-amount="{{ scholarship.scholarship_amount or '' }}" data-scholarship-deadline="{{ scholarship.application_end_date or '' }}" data-scholarship-type="{{ scholarship.scholarship_type }}" data-scholarship-degree="{{ scholarship.degree }}" data-scholarship-branch="{{ scholarship.branch }}">
+                        <i class="bi bi-bookmark"></i>
+                    </button>
+                    <button class="btn btn-outline-light compare-toggle" type="button" data-compare-toggle data-scholarship-card data-scholarship-id="{{ scholarship.scholarship_id }}" data-scholarship-name="{{ scholarship.scholarship_name }}" data-scholarship-slug="{{ scholarship.slug }}" data-scholarship-provider="{{ scholarship.provider_name }}" data-scholarship-amount="{{ scholarship.scholarship_amount or '' }}" data-scholarship-deadline="{{ scholarship.application_end_date or '' }}" data-scholarship-type="{{ scholarship.scholarship_type }}" data-scholarship-degree="{{ scholarship.degree }}" data-scholarship-branch="{{ scholarship.branch }}">Compare</button>
+                </div>
+            </div>
+
+            <div class="detail-stats mb-4">
+                <div class="detail-stat"><span class="info-label">Amount</span><span class="info-value">{{ scholarship.scholarship_amount or 'Varies' }}</span></div>
+                <div class="detail-stat"><span class="info-label">Deadline</span><span class="info-value">{{ scholarship.application_end_date or 'TBA' }}</span></div>
+                <div class="detail-stat"><span class="info-label">Minimum CGPA</span><span class="info-value">{{ scholarship.minimum_cgpa or 'Not specified' }}</span></div>
+                <div class="detail-stat"><span class="info-label">Family Income</span><span class="info-value">{{ scholarship.maximum_family_income or 'No limit listed' }}</span></div>
+            </div>
+
+            <div class="row g-4">
+                <div class="col-12">
+                    <h2 class="h5 mb-2">Description</h2>
+                    <p class="text-secondary mb-0">{{ scholarship.description }}</p>
+                </div>
+                <div class="col-md-6">
+                    <h2 class="h5 mb-2">Eligibility</h2>
+                    <p class="text-secondary mb-0">{{ scholarship.eligibility_description }}</p>
+                </div>
+                <div class="col-md-6">
+                    <h2 class="h5 mb-2">Benefits</h2>
+                    <p class="text-secondary mb-0">{{ scholarship.benefits or 'Benefits will be listed by the provider.' }}</p>
+                </div>
+                <div class="col-md-6">
+                    <h2 class="h5 mb-2">Selection Process</h2>
+                    <p class="text-secondary mb-0">{{ scholarship.selection_process or 'Selection details are not available yet.' }}</p>
+                </div>
+                <div class="col-md-6">
+                    <h2 class="h5 mb-2">Required Documents</h2>
+                    <p class="text-secondary mb-0">{{ scholarship.required_documents or 'Document checklist will be updated soon.' }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="page-panel rounded-5 p-4 mb-4">
+            <h2 class="h5 mb-3">Quick Facts</h2>
+            <div class="d-flex flex-column gap-3">
+                <div><span class="info-label">Degree</span><div class="info-value">{{ scholarship.degree }}</div></div>
+                <div><span class="info-label">Branch</span><div class="info-value">{{ scholarship.branch }}</div></div>
+                <div><span class="info-label">Academic Year</span><div class="info-value">{{ scholarship.academic_year }}</div></div>
+                <div><span class="info-label">Gender</span><div class="info-value text-capitalize">{{ scholarship.gender }}</div></div>
+                <div><span class="info-label">Categories</span><div class="info-value">{{ scholarship.categories|join(', ') if scholarship.categories else 'Open' }}</div></div>
+                <div><span class="info-label">States</span><div class="info-value">{{ scholarship.states|join(', ') if scholarship.states else 'Pan India' }}</div></div>
+            </div>
+        </div>
+        <div class="page-panel rounded-5 p-4">
+            <h2 class="h5 mb-3">Apply</h2>
+            <div class="d-grid gap-2">
+                <a class="btn btn-primary" href="{{ scholarship.application_link }}" target="_blank" rel="noopener noreferrer">Application Link</a>
+                <a class="btn btn-outline-light" href="{{ scholarship.official_website }}" target="_blank" rel="noopener noreferrer">Official Website</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="mt-4">
+    <div class="section-heading mb-3">
+        <div>
+            <p class="text-uppercase small text-secondary mb-1">Related</p>
+            <h2 class="h4 mb-0">Students Also Viewed</h2>
+        </div>
+    </div>
+    <div class="row g-4">
+        {% for item in related_items %}
+            <div class="col-md-6 col-xl-4">{{ scholarship_card(item) }}</div>
+        {% else %}
+            <div class="col-12"><div class="page-panel rounded-5 p-4 text-secondary">Related scholarships will appear here as more records are added.</div></div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

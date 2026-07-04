@@ -8,6 +8,11 @@
             <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-2">
                 <li class="nav-item"><a class="nav-link" href="{{ url_for('main.home') }}">Home</a></li>
                 <li class="nav-item"><a class="nav-link" href="{{ url_for('student.scholarships') }}">Scholarships</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('student.bookmarks') }}">Bookmarks</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('student.compare') }}">Compare</a></li>
+                <li class="nav-item theme-switcher">
+                    <button type="button" class="btn btn-sm btn-outline-light" data-theme-toggle>Theme</button>
+                </li>
                 {% if session.get("admin_id") %}
                     <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.dashboard') }}">Dashboard</a></li>
                     <li class="nav-item">

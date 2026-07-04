@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Compare Scholarships | ScholarAI{% endblock %}
+
+{% block content %}
+<section class="page-panel rounded-5 p-4 p-lg-5">
+    <div class="d-flex justify-content-between flex-wrap gap-3 align-items-start mb-4">
+        <div>
+            <p class="text-uppercase small text-secondary mb-2">Comparison</p>
+            <h1 class="h2 mb-2">Compare Scholarships Side by Side</h1>
+            <p class="text-secondary mb-0">Pick up to three scholarships and review the most important differences quickly.</p>
+        </div>
+        <a class="btn btn-outline-light" href="{{ url_for('student.scholarships') }}">Choose Scholarships</a>
+    </div>
+    {% if comparison_items %}
+        <div class="table-responsive compare-table-shell">
+            <table class="table table-dark align-middle compare-table mb-0">
+                <thead>
+                    <tr>
+                        <th>Field</th>
+                        {% for item in comparison_items %}
+                            <th>{{ item.scholarship_name }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><th>Provider</th>{% for item in comparison_items %}<td>{{ item.provider_name }}</td>{% endfor %}</tr>
+                    <tr><th>Type</th>{% for item in comparison_items %}<td class="text-capitalize">{{ item.scholarship_type }}</td>{% endfor %}</tr>
+                    <tr><th>Amount</th>{% for item in comparison_items %}<td>{{ item.scholarship_amount or 'Varies' }}</td>{% endfor %}</tr>
+                    <tr><th>Deadline</th>{% for item in comparison_items %}<td>{{ item.application_end_date or 'TBA' }}</td>{% endfor %}</tr>
+                    <tr><th>Degree</th>{% for item in comparison_items %}<td>{{ item.degree }}</td>{% endfor %}</tr>
+                    <tr><th>Branch</th>{% for item in comparison_items %}<td>{{ item.branch }}</td>{% endfor %}</tr>
+                    <tr><th>Year</th>{% for item in comparison_items %}<td>{{ item.academic_year }}</td>{% endfor %}</tr>
+                    <tr><th>CGPA</th>{% for item in comparison_items %}<td>{{ item.minimum_cgpa or 'Not specified' }}</td>{% endfor %}</tr>
+                    <tr><th>Income Limit</th>{% for item in comparison_items %}<td>{{ item.maximum_family_income or 'Not specified' }}</td>{% endfor %}</tr>
+                    <tr><th>Categories</th>{% for item in comparison_items %}<td>{{ item.categories|join(', ') if item.categories else 'Open' }}</td>{% endfor %}</tr>
+                    <tr><th>States</th>{% for item in comparison_items %}<td>{{ item.states|join(', ') if item.states else 'Pan India' }}</td>{% endfor %}</tr>
+                    <tr><th>Apply</th>{% for item in comparison_items %}<td><a class="btn btn-sm btn-primary" href="{{ url_for('student.scholarship_detail', slug=item.slug) }}">Open</a></td>{% endfor %}</tr>
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="page-panel rounded-5 p-5 text-center">
+            <h2 class="h4 mb-2">No scholarships selected for comparison.</h2>
+            <p class="text-secondary mb-3">Use the compare buttons on the scholarship cards to add up to three options.</p>
+            <a class="btn btn-primary" href="{{ url_for('student.scholarships') }}">Go to Scholarships</a>
+        </div>
+    {% endif %}
+</section>
+{% endblock %}

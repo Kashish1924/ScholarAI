@@ -1,6 +1,14 @@
-<footer class="border-top border-secondary-subtle py-4">
-    <div class="container d-flex flex-column flex-md-row justify-content-between gap-2">
-        <p class="mb-0 text-secondary">ScholarAI scaffold built for modular scholarship discovery.</p>
-        <p class="mb-0 text-secondary">Designed for production-ready growth.</p>
+<footer class="border-top border-secondary-subtle py-5 mt-5">
+    <div class="container d-flex flex-column flex-lg-row justify-content-between gap-4">
+        <div>
+            <h2 class="h5 mb-2">ScholarAI</h2>
+            <p class="mb-0 text-secondary">A smart scholarship discovery portal built for Indian B.Tech students.</p>
+        </div>
+        <div class="d-flex flex-column flex-md-row gap-4">
+            <a class="text-secondary text-decoration-none" href="{{ url_for('student.scholarships') }}">Explore Scholarships</a>
+            <a class="text-secondary text-decoration-none" href="{{ url_for('student.bookmarks') }}">Bookmarks</a>
+            <a class="text-secondary text-decoration-none" href="{{ url_for('student.compare') }}">Compare</a>
+            <a class="text-secondary text-decoration-none" href="{{ url_for('admin.login') }}">Admin</a>
+        </div>
     </div>
 </footer>

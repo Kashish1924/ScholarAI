@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}Eligibility Checker | ScholarAI{% endblock %}
+
+{% block content %}
+<section class="page-panel rounded-5 p-4 p-lg-5">
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <p class="text-uppercase small text-secondary mb-2">Eligibility Checker</p>
+            <h1 class="h2 mb-3">Prepare student inputs for the backend eligibility engine.</h1>
+            <p class="text-secondary mb-0">
+                This screen is ready for the next module where we will plug it into the eligibility
+                scoring engine. The engine will stay backend-driven, and AI explanations will remain optional.
+            </p>
+        </div>
+        <div class="col-lg-5">
+            <div class="glass-card p-4">
+                <h2 class="h5 mb-3">Fields Planned</h2>
+                <ul class="list-unstyled mb-0 text-secondary d-flex flex-column gap-2">
+                    <li>Income</li>
+                    <li>CGPA</li>
+                    <li>Category</li>
+                    <li>State</li>
+                    <li>Gender</li>
+                    <li>Degree and Branch</li>
+                    <li>Minority, Disability, Hosteller, Day Scholar</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
