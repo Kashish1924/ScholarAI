@@ -2,6 +2,7 @@ from flask import Blueprint, request
 
 from app.services.analytics_service import AnalyticsService
 from app.services.content_service import ContentService
+from app.services.eligibility_service import EligibilityService
 from app.services.scholarship_service import ScholarshipService
 from app.utils.api import error_response, success_response
 from app.utils.validation import ValidationError
@@ -250,6 +251,68 @@ def analytics_summary():
         "Analytics fetched successfully.",
         data=AnalyticsService.get_dashboard_analytics(),
     )
+
+
+@api_bp.post("/eligibility/check")
+def eligibility_check():
+    """Run deterministic eligibility scoring for a student profile."""
+    payload = request.get_json(silent=True)
+    if payload is None:
+        return error_response("Request body must be valid JSON.", status_code=400)
+
+    try:
+        result = EligibilityService.evaluate_student_profile(payload)
+    except ValidationError as exc:
+        return error_response(
+            "Eligibility validation failed.",
+            errors=exc.errors,
+            status_code=422,
+        )
+
+    return success_response("Eligibility evaluated successfully.", data=result)
+
+
+@api_bp.get("/recommendations")
+def recommendations():
+    """Return backend-driven scholarship recommendations from query input."""
+    payload = {
+        "income": request.args.get("income", type=float),
+        "cgpa": request.args.get("cgpa", type=float),
+        "category_slug": request.args.get("category_slug", type=str),
+        "state_code": request.args.get("state_code", type=str),
+        "gender": request.args.get("gender", type=str),
+        "degree": request.args.get("degree", type=str),
+        "branch": request.args.get("branch", type=str),
+        "academic_year": request.args.get("academic_year", type=str),
+        "minority": request.args.get("minority", default="false", type=str),
+        "disability": request.args.get("disability", default="false", type=str),
+        "hosteller": request.args.get("hosteller", default="false", type=str),
+        "day_scholar": request.args.get("day_scholar", default="false", type=str),
+    }
+    try:
+        result = EligibilityService.evaluate_student_profile(payload)
+    except ValidationError as exc:
+        return error_response(
+            "Recommendation input validation failed.",
+            errors=exc.errors,
+            status_code=422,
+        )
+    return success_response("Recommendations fetched successfully.", data=result)
+
+
+@api_bp.get("/deadline-reminders")
+def deadline_reminders():
+    """Return deadline reminder buckets."""
+    within_days = request.args.get("within_days", default=30, type=int)
+    data = EligibilityService.get_deadline_reminders(within_days=within_days)
+    return success_response("Deadline reminders fetched successfully.", data=data)
+
+
+@api_bp.get("/fraud-checks")
+def fraud_checks():
+    """Return rule-based suspicious scholarship warnings."""
+    data = EligibilityService.run_fraud_checks_for_all()
+    return success_response("Fraud checks completed successfully.", data=data)
 
 
 def _parse_id_list(raw_ids: str) -> list[int]:

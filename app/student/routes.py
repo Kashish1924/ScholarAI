@@ -1,6 +1,8 @@
 from flask import Blueprint, abort, render_template, request
 
+from app.services.eligibility_service import EligibilityService
 from app.services.scholarship_service import ScholarshipService
+from app.utils.validation import ValidationError
 
 
 student_bp = Blueprint("student", __name__, template_folder="../templates")
@@ -84,4 +86,35 @@ def compare():
 @student_bp.get("/eligibility-checker")
 def eligibility_checker():
     """Render the eligibility checker scaffold page."""
-    return render_template("student/eligibility_checker.html")
+    result = None
+    errors = {}
+    submitted = False
+
+    if request.args:
+        submitted = True
+        payload = {
+            "income": request.args.get("income", type=float),
+            "cgpa": request.args.get("cgpa", type=float),
+            "category_slug": request.args.get("category_slug", type=str),
+            "state_code": request.args.get("state_code", type=str),
+            "gender": request.args.get("gender", type=str),
+            "degree": request.args.get("degree", type=str),
+            "branch": request.args.get("branch", type=str),
+            "academic_year": request.args.get("academic_year", type=str),
+            "minority": request.args.get("minority", default="false", type=str),
+            "disability": request.args.get("disability", default="false", type=str),
+            "hosteller": request.args.get("hosteller", default="false", type=str),
+            "day_scholar": request.args.get("day_scholar", default="false", type=str),
+        }
+        try:
+            result = EligibilityService.evaluate_student_profile(payload)
+        except ValidationError as exc:
+            errors = exc.errors
+
+    return render_template(
+        "student/eligibility_checker.html",
+        result=result,
+        errors=errors,
+        submitted=submitted,
+        filters=ScholarshipService.get_filter_options(),
+    )

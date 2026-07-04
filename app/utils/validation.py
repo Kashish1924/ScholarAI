@@ -346,3 +346,88 @@ class ScholarshipValidator:
         """Raise a typed validation error when collected errors exist."""
         if errors:
             raise ValidationError(errors)
+
+
+class EligibilityInputValidator:
+    """Validation rules for eligibility engine input payloads."""
+
+    REQUIRED_FIELDS = {
+        "income",
+        "cgpa",
+        "category_slug",
+        "state_code",
+        "gender",
+        "degree",
+        "branch",
+        "academic_year",
+        "minority",
+        "disability",
+        "hosteller",
+        "day_scholar",
+    }
+
+    @classmethod
+    def validate_payload(cls, payload: dict) -> dict:
+        """Validate a student eligibility input payload."""
+        errors = {}
+        clean = {}
+
+        for field_name in sorted(cls.REQUIRED_FIELDS):
+            if field_name not in payload:
+                errors.setdefault(field_name, []).append("This field is required.")
+
+        clean["income"] = ScholarshipValidator._clean_decimal("income", payload.get("income"), errors)
+        clean["cgpa"] = ScholarshipValidator._clean_decimal("cgpa", payload.get("cgpa"), errors)
+        clean["category_slug"] = ScholarshipValidator._clean_text(
+            "category_slug", payload.get("category_slug"), errors
+        )
+        clean["state_code"] = ScholarshipValidator._clean_text(
+            "state_code", payload.get("state_code"), errors
+        )
+        clean["gender"] = ScholarshipValidator._clean_choice(
+            "gender",
+            payload.get("gender"),
+            ScholarshipValidator.ALLOWED_GENDERS,
+            errors,
+        )
+        clean["degree"] = ScholarshipValidator._clean_text("degree", payload.get("degree"), errors)
+        clean["branch"] = ScholarshipValidator._clean_text("branch", payload.get("branch"), errors)
+        clean["academic_year"] = ScholarshipValidator._clean_text(
+            "academic_year", payload.get("academic_year"), errors
+        )
+        clean["minority"] = ScholarshipValidator._clean_boolean("minority", payload.get("minority"), errors)
+        clean["disability"] = ScholarshipValidator._clean_boolean(
+            "disability", payload.get("disability"), errors
+        )
+        clean["hosteller"] = ScholarshipValidator._clean_boolean(
+            "hosteller", payload.get("hosteller"), errors
+        )
+        clean["day_scholar"] = ScholarshipValidator._clean_boolean(
+            "day_scholar", payload.get("day_scholar"), errors
+        )
+
+        if clean["cgpa"] is not None and clean["cgpa"] > Decimal("10"):
+            errors.setdefault("cgpa", []).append("CGPA cannot be greater than 10.")
+
+        if clean["category_slug"]:
+            clean["category_slug"] = clean["category_slug"].lower()
+            category_exists = Category.query.filter_by(
+                slug=clean["category_slug"],
+                is_active=True,
+            ).first()
+            if category_exists is None:
+                errors.setdefault("category_slug", []).append("Selected category does not exist.")
+        if clean["state_code"]:
+            clean["state_code"] = clean["state_code"].upper()
+            state_exists = State.query.filter_by(code=clean["state_code"], is_active=True).first()
+            if state_exists is None:
+                errors.setdefault("state_code", []).append("Selected state does not exist.")
+        if clean["degree"]:
+            clean["degree"] = clean["degree"].strip()
+        if clean["branch"]:
+            clean["branch"] = clean["branch"].strip()
+        if clean["academic_year"]:
+            clean["academic_year"] = clean["academic_year"].strip().lower()
+
+        ScholarshipValidator._raise_if_errors(errors)
+        return clean
