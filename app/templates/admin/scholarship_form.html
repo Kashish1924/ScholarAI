@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page_title }} | ScholarAI{% endblock %}
+
+{% block content %}
+<section class="page-panel rounded-4 p-4">
+    <div class="mb-4">
+        <p class="text-uppercase small text-secondary mb-2">Admin Scholarship Form</p>
+        <h2 class="h3 mb-1">{{ page_title }}</h2>
+        <p class="text-secondary mb-0">Use validated admin controls to manage scholarship records safely.</p>
+    </div>
+
+    <form method="post" novalidate>
+        {{ form.hidden_tag() }}
+        <div class="row g-4">
+            <div class="col-md-6">
+                <label class="form-label" for="{{ form.scholarship_name.id }}">{{ form.scholarship_name.label.text }}</label>
+                {{ form.scholarship_name(class="form-control") }}
+                {% for error in form.scholarship_name.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-md-6">
+                <label class="form-label" for="{{ form.provider_name.id }}">{{ form.provider_name.label.text }}</label>
+                {{ form.provider_name(class="form-control") }}
+                {% for error in form.provider_name.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label" for="{{ form.scholarship_type.id }}">{{ form.scholarship_type.label.text }}</label>
+                {{ form.scholarship_type(class="form-select") }}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label" for="{{ form.scholarship_amount.id }}">{{ form.scholarship_amount.label.text }}</label>
+                {{ form.scholarship_amount(class="form-control", placeholder="50000") }}
+                {% for error in form.scholarship_amount.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label" for="{{ form.minimum_cgpa.id }}">{{ form.minimum_cgpa.label.text }}</label>
+                {{ form.minimum_cgpa(class="form-control", placeholder="7.5") }}
+                {% for error in form.minimum_cgpa.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-12">
+                <label class="form-label" for="{{ form.eligibility_description.id }}">{{ form.eligibility_description.label.text }}</label>
+                {{ form.eligibility_description(class="form-control", rows="3") }}
+                {% for error in form.eligibility_description.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label" for="{{ form.maximum_family_income.id }}">{{ form.maximum_family_income.label.text }}</label>
+                {{ form.maximum_family_income(class="form-control", placeholder="300000") }}
+                {% for error in form.maximum_family_income.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label" for="{{ form.gender.id }}">{{ form.gender.label.text }}</label>
+                {{ form.gender(class="form-select") }}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label" for="{{ form.degree.id }}">{{ form.degree.label.text }}</label>
+                {{ form.degree(class="form-control", placeholder="B.Tech") }}
+                {% for error in form.degree.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label" for="{{ form.branch.id }}">{{ form.branch.label.text }}</label>
+                {{ form.branch(class="form-control", placeholder="CSE") }}
+                {% for error in form.branch.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label" for="{{ form.academic_year.id }}">{{ form.academic_year.label.text }}</label>
+                {{ form.academic_year(class="form-select") }}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label" for="{{ form.trending_score.id }}">{{ form.trending_score.label.text }}</label>
+                {{ form.trending_score(class="form-control", placeholder="0") }}
+                {% for error in form.trending_score.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-md-6">
+                <label class="form-label" for="{{ form.categories.id }}">{{ form.categories.label.text }}</label>
+                {{ form.categories(class="form-control", placeholder="general, obc") }}
+                <div class="form-text">{{ form.categories.description }}</div>
+                {% for error in form.categories.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-md-6">
+                <label class="form-label" for="{{ form.states.id }}">{{ form.states.label.text }}</label>
+                {{ form.states(class="form-control", placeholder="DL, MH") }}
+                <div class="form-text">{{ form.states.description }}</div>
+                {% for error in form.states.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-md-6">
+                <label class="form-label" for="{{ form.application_link.id }}">{{ form.application_link.label.text }}</label>
+                {{ form.application_link(class="form-control") }}
+                {% for error in form.application_link.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-md-6">
+                <label class="form-label" for="{{ form.official_website.id }}">{{ form.official_website.label.text }}</label>
+                {{ form.official_website(class="form-control") }}
+                {% for error in form.official_website.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label" for="{{ form.application_start_date.id }}">{{ form.application_start_date.label.text }}</label>
+                {{ form.application_start_date(class="form-control", placeholder="YYYY-MM-DD") }}
+                {% for error in form.application_start_date.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label" for="{{ form.application_end_date.id }}">{{ form.application_end_date.label.text }}</label>
+                {{ form.application_end_date(class="form-control", placeholder="YYYY-MM-DD") }}
+                {% for error in form.application_end_date.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label" for="{{ form.status.id }}">{{ form.status.label.text }}</label>
+                {{ form.status(class="form-select") }}
+            </div>
+            <div class="col-12">
+                <label class="form-label" for="{{ form.required_documents.id }}">{{ form.required_documents.label.text }}</label>
+                {{ form.required_documents(class="form-control", rows="2") }}
+            </div>
+            <div class="col-12">
+                <label class="form-label" for="{{ form.description.id }}">{{ form.description.label.text }}</label>
+                {{ form.description(class="form-control", rows="3") }}
+                {% for error in form.description.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-md-6">
+                <label class="form-label" for="{{ form.benefits.id }}">{{ form.benefits.label.text }}</label>
+                {{ form.benefits(class="form-control", rows="3") }}
+            </div>
+            <div class="col-md-6">
+                <label class="form-label" for="{{ form.selection_process.id }}">{{ form.selection_process.label.text }}</label>
+                {{ form.selection_process(class="form-control", rows="3") }}
+            </div>
+            <div class="col-12">
+                <div class="row g-3">
+                    <div class="col-sm-6 col-lg-3"><div class="form-check">{{ form.minority_eligibility(class="form-check-input") }} <label class="form-check-label" for="{{ form.minority_eligibility.id }}">{{ form.minority_eligibility.label.text }}</label></div></div>
+                    <div class="col-sm-6 col-lg-3"><div class="form-check">{{ form.disability_eligibility(class="form-check-input") }} <label class="form-check-label" for="{{ form.disability_eligibility.id }}">{{ form.disability_eligibility.label.text }}</label></div></div>
+                    <div class="col-sm-6 col-lg-3"><div class="form-check">{{ form.hosteller_eligibility(class="form-check-input") }} <label class="form-check-label" for="{{ form.hosteller_eligibility.id }}">{{ form.hosteller_eligibility.label.text }}</label></div></div>
+                    <div class="col-sm-6 col-lg-3"><div class="form-check">{{ form.day_scholar_eligibility(class="form-check-input") }} <label class="form-check-label" for="{{ form.day_scholar_eligibility.id }}">{{ form.day_scholar_eligibility.label.text }}</label></div></div>
+                    <div class="col-sm-6 col-lg-3"><div class="form-check">{{ form.is_featured(class="form-check-input") }} <label class="form-check-label" for="{{ form.is_featured.id }}">{{ form.is_featured.label.text }}</label></div></div>
+                    <div class="col-sm-6 col-lg-3"><div class="form-check">{{ form.is_renewable(class="form-check-input") }} <label class="form-check-label" for="{{ form.is_renewable.id }}">{{ form.is_renewable.label.text }}</label></div></div>
+                </div>
+            </div>
+            <div class="col-12 d-flex gap-3">
+                <button type="submit" class="btn btn-primary">{{ submit_label }}</button>
+                <a class="btn btn-outline-light" href="{{ url_for('admin.scholarship_list') }}">Cancel</a>
+            </div>
+        </div>
+    </form>
+</section>
+{% endblock %}

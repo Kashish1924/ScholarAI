@@ -85,6 +85,18 @@ class ScholarshipService:
         return True
 
     @staticmethod
+    def list_for_admin(limit: int = 20) -> list[Scholarship]:
+        """Return recent scholarships for admin management screens."""
+        return (
+            Scholarship.query.order_by(
+                Scholarship.updated_at.desc(),
+                Scholarship.created_at.desc(),
+            )
+            .limit(max(limit, 1))
+            .all()
+        )
+
+    @staticmethod
     def serialize_scholarship(scholarship: Scholarship) -> dict:
         """Convert scholarship model data into JSON-friendly output."""
         return {
