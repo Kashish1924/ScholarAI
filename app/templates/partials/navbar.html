@@ -8,6 +8,8 @@
             <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-2">
                 <li class="nav-item"><a class="nav-link" href="{{ url_for('main.home') }}">Home</a></li>
                 <li class="nav-item"><a class="nav-link" href="{{ url_for('student.scholarships') }}">Scholarships</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('student.news') }}">News</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('student.faq') }}">FAQ</a></li>
                 <li class="nav-item"><a class="nav-link" href="{{ url_for('student.bookmarks') }}">Bookmarks</a></li>
                 <li class="nav-item"><a class="nav-link" href="{{ url_for('student.compare') }}">Compare</a></li>
                 <li class="nav-item theme-switcher">
@@ -15,6 +17,7 @@
                 </li>
                 {% if session.get("admin_id") %}
                     <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.dashboard') }}">Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.news_list') }}">Content</a></li>
                     <li class="nav-item">
                         <form method="post" action="{{ url_for('admin.logout') }}" class="d-inline">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

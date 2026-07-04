@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}FAQ | ScholarAI{% endblock %}
+
+{% block content %}
+<section class="page-panel rounded-5 p-4 p-lg-5 mb-4">
+    <p class="text-uppercase small text-secondary mb-2">Help Center</p>
+    <h1 class="h2 mb-2">Frequently Asked Questions</h1>
+    <p class="text-secondary mb-0">Quick answers about scholarship discovery, eligibility, and platform usage.</p>
+</section>
+
+<section class="d-flex flex-column gap-3">
+    {% for item in faqs %}
+        <article class="page-panel rounded-5 p-4">
+            <h2 class="h5 mb-2">{{ item.question }}</h2>
+            <p class="text-secondary mb-0">{{ item.answer }}</p>
+        </article>
+    {% else %}
+        <div class="page-panel rounded-5 p-5 text-center text-secondary">No FAQs have been published yet.</div>
+    {% endfor %}
+</section>
+{% endblock %}

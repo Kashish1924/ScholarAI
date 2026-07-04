@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page_title }} | ScholarAI{% endblock %}
+
+{% block content %}
+<section class="page-panel rounded-5 p-4">
+    <h2 class="h3 mb-4">{{ page_title }}</h2>
+    <form method="post" novalidate>
+        {{ form.hidden_tag() }}
+        <div class="row g-4">
+            <div class="col-12">
+                <label class="form-label" for="{{ form.question.id }}">{{ form.question.label.text }}</label>
+                {{ form.question(class="form-control") }}
+                {% for error in form.question.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-12">
+                <label class="form-label" for="{{ form.answer.id }}">{{ form.answer.label.text }}</label>
+                {{ form.answer(class="form-control", rows="6") }}
+                {% for error in form.answer.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label" for="{{ form.display_order.id }}">{{ form.display_order.label.text }}</label>
+                {{ form.display_order(class="form-control") }}
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <div class="form-check">{{ form.is_published(class="form-check-input") }} <label class="form-check-label" for="{{ form.is_published.id }}">{{ form.is_published.label.text }}</label></div>
+            </div>
+            <div class="col-12 d-flex gap-3">
+                <button class="btn btn-primary" type="submit">{{ submit_label }}</button>
+                <a class="btn btn-outline-light" href="{{ url_for('admin.faq_list') }}">Cancel</a>
+            </div>
+        </div>
+    </form>
+</section>
+{% endblock %}

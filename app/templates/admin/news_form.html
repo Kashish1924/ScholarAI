@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page_title }} | ScholarAI{% endblock %}
+
+{% block content %}
+<section class="page-panel rounded-5 p-4">
+    <h2 class="h3 mb-4">{{ page_title }}</h2>
+    <form method="post" novalidate>
+        {{ form.hidden_tag() }}
+        <div class="row g-4">
+            <div class="col-12">
+                <label class="form-label" for="{{ form.title.id }}">{{ form.title.label.text }}</label>
+                {{ form.title(class="form-control") }}
+                {% for error in form.title.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-12">
+                <label class="form-label" for="{{ form.summary.id }}">{{ form.summary.label.text }}</label>
+                {{ form.summary(class="form-control", rows="3") }}
+                {% for error in form.summary.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-12">
+                <label class="form-label" for="{{ form.content.id }}">{{ form.content.label.text }}</label>
+                {{ form.content(class="form-control", rows="6") }}
+                {% for error in form.content.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-md-6">
+                <label class="form-label" for="{{ form.source_url.id }}">{{ form.source_url.label.text }}</label>
+                {{ form.source_url(class="form-control") }}
+            </div>
+            <div class="col-md-6">
+                <label class="form-label" for="{{ form.image_url.id }}">{{ form.image_url.label.text }}</label>
+                {{ form.image_url(class="form-control") }}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label" for="{{ form.priority.id }}">{{ form.priority.label.text }}</label>
+                {{ form.priority(class="form-control") }}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label" for="{{ form.related_scholarship_id.id }}">{{ form.related_scholarship_id.label.text }}</label>
+                {{ form.related_scholarship_id(class="form-control") }}
+                {% for error in form.related_scholarship_id.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <div class="form-check">{{ form.is_published(class="form-check-input") }} <label class="form-check-label" for="{{ form.is_published.id }}">{{ form.is_published.label.text }}</label></div>
+            </div>
+            <div class="col-12 d-flex gap-3">
+                <button class="btn btn-primary" type="submit">{{ submit_label }}</button>
+                <a class="btn btn-outline-light" href="{{ url_for('admin.news_list') }}">Cancel</a>
+            </div>
+        </div>
+    </form>
+</section>
+{% endblock %}

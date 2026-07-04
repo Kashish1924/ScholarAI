@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page_title }} | ScholarAI{% endblock %}
+
+{% block content %}
+<section class="page-panel rounded-5 p-4">
+    <h2 class="h3 mb-4">{{ page_title }}</h2>
+    <form method="post" novalidate>
+        {{ form.hidden_tag() }}
+        <div class="row g-4">
+            <div class="col-md-6">
+                <label class="form-label" for="{{ form.title.id }}">{{ form.title.label.text }}</label>
+                {{ form.title(class="form-control") }}
+                {% for error in form.title.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-md-3">
+                <label class="form-label" for="{{ form.notification_type.id }}">{{ form.notification_type.label.text }}</label>
+                {{ form.notification_type(class="form-select") }}
+            </div>
+            <div class="col-md-3">
+                <label class="form-label" for="{{ form.audience_type.id }}">{{ form.audience_type.label.text }}</label>
+                {{ form.audience_type(class="form-select") }}
+            </div>
+            <div class="col-12">
+                <label class="form-label" for="{{ form.message.id }}">{{ form.message.label.text }}</label>
+                {{ form.message(class="form-control", rows="5") }}
+                {% for error in form.message.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label" for="{{ form.starts_at.id }}">{{ form.starts_at.label.text }}</label>
+                {{ form.starts_at(class="form-control", placeholder="2026-07-04T10:00") }}
+                {% for error in form.starts_at.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label" for="{{ form.ends_at.id }}">{{ form.ends_at.label.text }}</label>
+                {{ form.ends_at(class="form-control", placeholder="2026-07-10T18:00") }}
+                {% for error in form.ends_at.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label" for="{{ form.related_scholarship_id.id }}">{{ form.related_scholarship_id.label.text }}</label>
+                {{ form.related_scholarship_id(class="form-control") }}
+                {% for error in form.related_scholarship_id.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-12">
+                <div class="form-check">{{ form.is_active(class="form-check-input") }} <label class="form-check-label" for="{{ form.is_active.id }}">{{ form.is_active.label.text }}</label></div>
+            </div>
+            <div class="col-12 d-flex gap-3">
+                <button class="btn btn-primary" type="submit">{{ submit_label }}</button>
+                <a class="btn btn-outline-light" href="{{ url_for('admin.notification_list') }}">Cancel</a>
+            </div>
+        </div>
+    </form>
+</section>
+{% endblock %}

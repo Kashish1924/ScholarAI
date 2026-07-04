@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Notifications | ScholarAI{% endblock %}
+
+{% block content %}
+<section class="page-panel rounded-5 p-4">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+        <div>
+            <p class="text-uppercase small text-secondary mb-2">Content Management</p>
+            <h2 class="h3 mb-1">Manage Notifications</h2>
+            <p class="text-secondary mb-0">Create student reminders and important scholarship notices.</p>
+        </div>
+        <a class="btn btn-primary" href="{{ url_for('admin.add_notification') }}">Add Notification</a>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-dark table-hover align-middle mb-0">
+            <thead><tr><th>Title</th><th>Type</th><th>Audience</th><th>Status</th><th class="text-end">Actions</th></tr></thead>
+            <tbody>
+                {% for item in notifications %}
+                    <tr>
+                        <td>{{ item.title }}</td>
+                        <td class="text-capitalize">{{ item.notification_type }}</td>
+                        <td class="text-capitalize">{{ item.audience_type }}</td>
+                        <td>{{ 'Active' if item.is_active else 'Inactive' }}</td>
+                        <td class="text-end">
+                            <div class="d-inline-flex gap-2">
+                                <a class="btn btn-sm btn-outline-light" href="{{ url_for('admin.edit_notification', notification_id=item.notification_id) }}">Edit</a>
+                                <form method="post" action="{{ url_for('admin.delete_notification', notification_id=item.notification_id) }}">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="5" class="text-secondary">No notifications available.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

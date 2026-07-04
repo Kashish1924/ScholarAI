@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}Notifications | ScholarAI{% endblock %}
+
+{% block content %}
+<section class="page-panel rounded-5 p-4 p-lg-5 mb-4">
+    <p class="text-uppercase small text-secondary mb-2">Announcements</p>
+    <h1 class="h2 mb-2">Student Notifications</h1>
+    <p class="text-secondary mb-0">Important reminders and scholarship notices curated by the admin team.</p>
+</section>
+
+<section class="d-flex flex-column gap-3">
+    {% for item in notifications %}
+        <article class="page-panel rounded-5 p-4">
+            <div class="d-flex justify-content-between align-items-start gap-3 mb-2">
+                <h2 class="h5 mb-0">{{ item.title }}</h2>
+                <span class="meta-pill text-capitalize">{{ item.notification_type }}</span>
+            </div>
+            <p class="text-secondary mb-0">{{ item.message }}</p>
+        </article>
+    {% else %}
+        <div class="page-panel rounded-5 p-5 text-center text-secondary">No active notifications are available right now.</div>
+    {% endfor %}
+</section>
+{% endblock %}

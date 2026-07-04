@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import BooleanField, PasswordField, SelectField, StringField, SubmitField, TextAreaField
+from wtforms import BooleanField, IntegerField, PasswordField, SelectField, StringField, SubmitField, TextAreaField
 from wtforms.validators import DataRequired, Email, Length, Optional, URL
 
 
@@ -86,3 +86,57 @@ class ScholarshipForm(FlaskForm):
         description="Comma-separated state codes, for example: DL, MH",
     )
     submit = SubmitField("Save Scholarship")
+
+
+class NewsForm(FlaskForm):
+    """Admin news create and edit form."""
+
+    title = StringField("Title", validators=[DataRequired(), Length(max=255)])
+    summary = TextAreaField("Summary", validators=[DataRequired()])
+    content = TextAreaField("Content", validators=[DataRequired()])
+    source_url = StringField("Source URL", validators=[Optional(), URL(), Length(max=500)])
+    image_url = StringField("Image URL", validators=[Optional(), URL(), Length(max=500)])
+    priority = IntegerField("Priority", validators=[Optional()])
+    is_published = BooleanField("Published")
+    related_scholarship_id = IntegerField("Related Scholarship ID", validators=[Optional()])
+    submit = SubmitField("Save News")
+
+
+class FAQForm(FlaskForm):
+    """Admin FAQ create and edit form."""
+
+    question = StringField("Question", validators=[DataRequired(), Length(max=255)])
+    answer = TextAreaField("Answer", validators=[DataRequired()])
+    display_order = IntegerField("Display Order", validators=[Optional()])
+    is_published = BooleanField("Published")
+    submit = SubmitField("Save FAQ")
+
+
+class NotificationForm(FlaskForm):
+    """Admin notification create and edit form."""
+
+    title = StringField("Title", validators=[DataRequired(), Length(max=255)])
+    message = TextAreaField("Message", validators=[DataRequired()])
+    notification_type = SelectField(
+        "Notification Type",
+        choices=[
+            ("general", "General"),
+            ("reminder", "Reminder"),
+            ("alert", "Alert"),
+        ],
+        validators=[DataRequired()],
+    )
+    audience_type = SelectField(
+        "Audience Type",
+        choices=[
+            ("all", "All"),
+            ("student", "Student"),
+            ("admin", "Admin"),
+        ],
+        validators=[DataRequired()],
+    )
+    is_active = BooleanField("Active")
+    starts_at = StringField("Starts At", validators=[Optional(), Length(max=25)])
+    ends_at = StringField("Ends At", validators=[Optional(), Length(max=25)])
+    related_scholarship_id = IntegerField("Related Scholarship ID", validators=[Optional()])
+    submit = SubmitField("Save Notification")

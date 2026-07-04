@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}Scholarship News | ScholarAI{% endblock %}
+
+{% block content %}
+<section class="page-panel rounded-5 p-4 p-lg-5 mb-4">
+    <p class="text-uppercase small text-secondary mb-2">Latest Updates</p>
+    <h1 class="h2 mb-2">Scholarship News</h1>
+    <p class="text-secondary mb-0">Track new announcements, deadline extensions, and provider updates from one place.</p>
+</section>
+
+<section class="row g-4">
+    {% for item in news_result.items %}
+        <div class="col-lg-4 col-md-6">
+            <article class="page-panel rounded-5 p-4 h-100">
+                <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+                    <span class="meta-pill">Priority {{ item.priority }}</span>
+                    {% if item.published_at %}<span class="text-secondary small">{{ item.published_at[:10] }}</span>{% endif %}
+                </div>
+                <h2 class="h5 mb-2">{{ item.title }}</h2>
+                <p class="text-secondary mb-3">{{ item.summary }}</p>
+                <p class="small text-secondary mb-3">{{ item.content[:180] ~ ('...' if item.content|length > 180 else '') }}</p>
+                {% if item.source_url %}
+                    <a class="btn btn-outline-light btn-sm" href="{{ item.source_url }}" target="_blank" rel="noopener noreferrer">Read Source</a>
+                {% endif %}
+            </article>
+        </div>
+    {% else %}
+        <div class="col-12"><div class="page-panel rounded-5 p-5 text-center text-secondary">No news articles have been published yet.</div></div>
+    {% endfor %}
+</section>
+{% endblock %}

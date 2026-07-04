@@ -125,6 +125,12 @@ Main backend capabilities include:
 - Run automated tests
 - Verify admin login, scholarship listing, and eligibility endpoints
 
+## Portfolio Assets
+
+- GitHub kit: [docs/github_project_kit.md](C:/Users/DELL/OneDrive/Pictures/Documents/scholarAI/docs/github_project_kit.md)
+- Interview prep: [docs/interview_prep.md](C:/Users/DELL/OneDrive/Pictures/Documents/scholarAI/docs/interview_prep.md)
+- Presentation pack: [docs/presentation_pack.md](C:/Users/DELL/OneDrive/Pictures/Documents/scholarAI/docs/presentation_pack.md)
+
 ## Future Scope
 
 - CSV import and export UI polish

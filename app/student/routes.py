@@ -1,5 +1,6 @@
 from flask import Blueprint, abort, render_template, request
 
+from app.services.content_service import ContentService
 from app.services.eligibility_service import EligibilityService
 from app.services.scholarship_service import ScholarshipService
 from app.utils.validation import ValidationError
@@ -81,6 +82,28 @@ def compare():
         comparison_items=comparison_items,
         selected_ids=scholarship_ids[:3],
     )
+
+
+@student_bp.get("/news")
+def news():
+    """Render the scholarship news page."""
+    page = request.args.get("page", default=1, type=int)
+    news_result = ContentService.list_news(page=page, per_page=9, published_only=True)
+    return render_template("student/news.html", news_result=news_result)
+
+
+@student_bp.get("/faq")
+def faq():
+    """Render the FAQ page."""
+    faqs = ContentService.list_faqs(published_only=True)
+    return render_template("student/faq.html", faqs=faqs)
+
+
+@student_bp.get("/notifications")
+def notifications():
+    """Render active student notifications."""
+    items = ContentService.list_active_notifications(audience_type="student")
+    return render_template("student/notifications.html", notifications=items)
 
 
 @student_bp.get("/eligibility-checker")
