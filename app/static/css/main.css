@@ -1,0 +1,52 @@
+:root {
+    --brand-bg: #0f172a;
+    --brand-surface: #111c34;
+    --brand-panel: rgba(255, 255, 255, 0.08);
+    --brand-border: rgba(255, 255, 255, 0.12);
+    --brand-text: #e5eefb;
+    --brand-muted: #9fb1cc;
+    --brand-accent: #38bdf8;
+}
+
+body {
+    min-height: 100vh;
+    color: var(--brand-text);
+    background:
+        radial-gradient(circle at top, rgba(56, 189, 248, 0.18), transparent 30%),
+        linear-gradient(180deg, #08111f 0%, var(--brand-bg) 100%);
+}
+
+.navbar {
+    background: rgba(8, 17, 31, 0.72);
+    backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--brand-border);
+}
+
+.hero-section,
+.page-panel,
+.glass-card {
+    background: var(--brand-panel);
+    border: 1px solid var(--brand-border);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.22);
+}
+
+.auth-panel {
+    max-width: 720px;
+}
+
+.btn-primary {
+    background-color: var(--brand-accent);
+    border-color: var(--brand-accent);
+    color: #082032;
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+    background-color: #67d1ff;
+    border-color: #67d1ff;
+    color: #082032;
+}
+
+.text-secondary {
+    color: var(--brand-muted) !important;
+}

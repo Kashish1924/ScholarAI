@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}ScholarAI | Smart Scholarship Finder{% endblock %}
+
+{% block content %}
+<section class="hero-section p-4 p-md-5 rounded-4">
+    <div class="row align-items-center g-4">
+        <div class="col-lg-7">
+            <span class="badge rounded-pill text-bg-light mb-3">For Indian B.Tech students</span>
+            <h1 class="display-5 fw-semibold">Find the right scholarships without searching dozens of websites.</h1>
+            <p class="lead text-secondary mt-3">
+                ScholarAI combines structured backend eligibility logic with AI-ready explanations,
+                so students get relevant matches with clear reasoning.
+            </p>
+            <div class="d-flex flex-wrap gap-3 mt-4">
+                <a class="btn btn-primary btn-lg" href="{{ url_for('student.scholarships') }}">Explore Scholarships</a>
+                <a class="btn btn-outline-light btn-lg" href="{{ url_for('admin.login') }}">Admin Access</a>
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <div class="glass-card p-4">
+                <p class="small text-uppercase text-secondary mb-2">Module 1 Scaffold</p>
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2"><i class="bi bi-check2-circle me-2 text-success"></i>App factory architecture</li>
+                    <li class="mb-2"><i class="bi bi-check2-circle me-2 text-success"></i>Blueprint separation</li>
+                    <li class="mb-2"><i class="bi bi-check2-circle me-2 text-success"></i>AI placeholder services</li>
+                    <li><i class="bi bi-check2-circle me-2 text-success"></i>Bootstrap-ready base layout</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
