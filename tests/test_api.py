@@ -98,6 +98,14 @@ class ApiTestCase(unittest.TestCase):
         payload = response.get_json()["data"]
         self.assertIn("7", [str(key) for key in payload["scholarships"].keys()])
 
+    def test_taxonomy_create_endpoint_requires_admin_session(self):
+        response = self.client.post(
+            "/api/v1/taxonomy/categories",
+            json={"name": "Test Category", "slug": "test-category"},
+        )
+        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.get_json()["status"], "error")
+
 
 if __name__ == "__main__":
     unittest.main()

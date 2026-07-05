@@ -1,4 +1,4 @@
-from flask import Blueprint, request
+from flask import Blueprint, request, session
 
 from app.extensions import db
 from app.models import Category, State
@@ -6,6 +6,16 @@ from app.utils.api import error_response, success_response
 
 
 seed_bp = Blueprint("seed", __name__)
+
+
+def _require_admin_api_access():
+    """Require an authenticated admin session for taxonomy mutations."""
+    if not session.get("admin_id"):
+        return error_response(
+            "Admin authentication is required for this action.",
+            status_code=401,
+        )
+    return None
 
 
 @seed_bp.get("/taxonomy/categories")
@@ -49,6 +59,10 @@ def list_states():
 @seed_bp.post("/taxonomy/categories")
 def create_category():
     """Create a category lookup record."""
+    auth_error = _require_admin_api_access()
+    if auth_error:
+        return auth_error
+
     payload = request.get_json(silent=True)
     if payload is None:
         return error_response("Request body must be valid JSON.", status_code=400)
@@ -88,6 +102,10 @@ def create_category():
 @seed_bp.post("/taxonomy/states")
 def create_state():
     """Create a state lookup record."""
+    auth_error = _require_admin_api_access()
+    if auth_error:
+        return auth_error
+
     payload = request.get_json(silent=True)
     if payload is None:
         return error_response("Request body must be valid JSON.", status_code=400)

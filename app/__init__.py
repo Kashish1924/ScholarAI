@@ -44,6 +44,9 @@ def register_error_handlers(app: Flask) -> None:
 
     @app.errorhandler(500)
     def internal_error(error):
+        from app.extensions import db
+
+        db.session.rollback()
         if _is_api_request():
             return {"status": "error", "message": "Internal server error"}, 500
         return render_template("errors/500.html"), 500
