@@ -54,6 +54,8 @@ python app.py
 
 Open `http://127.0.0.1:5000/`.
 
+`python database/init_db.py` creates all SQLAlchemy tables automatically and seeds realistic sample scholarships and starter content when the database is empty.
+
 ## Initial Admin Setup
 
 ```bash

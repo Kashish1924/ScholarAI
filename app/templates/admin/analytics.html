@@ -139,9 +139,9 @@
             new Chart(typeCtx, {
                 type: "doughnut",
                 data: {
-                    labels: {{ analytics.charts.type_distribution.labels|tojson }},
+                    labels: {{ analytics.charts.type_distribution["labels"]|tojson }},
                     datasets: [{
-                        data: {{ analytics.charts.type_distribution.values|tojson }},
+                        data: {{ analytics.charts.type_distribution["values"]|tojson }},
                         backgroundColor: ["#5eead4", "#f59e0b"],
                         borderWidth: 0,
                     }],
@@ -158,10 +158,10 @@
             new Chart(publicationCtx, {
                 type: "bar",
                 data: {
-                    labels: {{ analytics.charts.publication_distribution.labels|tojson }},
+                    labels: {{ analytics.charts.publication_distribution["labels"]|tojson }},
                     datasets: [{
                         label: "Scholarships",
-                        data: {{ analytics.charts.publication_distribution.values|tojson }},
+                        data: {{ analytics.charts.publication_distribution["values"]|tojson }},
                         backgroundColor: ["#38bdf8", "#a78bfa", "#fb7185"],
                         borderRadius: 12,
                     }],

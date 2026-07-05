@@ -736,50 +736,57 @@ class ScholarshipService:
     @staticmethod
     def _apply_scholarship_updates(scholarship: Scholarship, clean_payload: dict) -> None:
         """Apply validated payload to an existing scholarship model."""
-        for field_name in ScholarshipValidator.UPDATABLE_FIELDS:
-            if field_name not in clean_payload:
-                continue
+        if "scholarship_name" in clean_payload:
+            scholarship.scholarship_name = clean_payload["scholarship_name"]
+            scholarship.slug = ScholarshipService._generate_unique_slug(
+                clean_payload["scholarship_name"],
+                scholarship_id=scholarship.scholarship_id,
+            )
 
-            if field_name == "scholarship_name":
-                scholarship.scholarship_name = clean_payload[field_name]
-                scholarship.slug = ScholarshipService._generate_unique_slug(
-                    clean_payload[field_name],
-                    scholarship_id=scholarship.scholarship_id,
-                )
+        deferred_fields = {"scholarship_name", "categories", "states"}
+        for field_name, field_value in clean_payload.items():
+            if field_name in deferred_fields:
                 continue
+            setattr(scholarship, field_name, field_value)
 
-            if field_name == "categories":
-                ScholarshipService._sync_categories(scholarship, clean_payload[field_name])
-                continue
+        if "categories" in clean_payload:
+            ScholarshipService._sync_categories(scholarship, clean_payload["categories"])
 
-            if field_name == "states":
-                ScholarshipService._sync_states(scholarship, clean_payload[field_name])
-                continue
-
-            setattr(scholarship, field_name, clean_payload[field_name])
+        if "states" in clean_payload:
+            ScholarshipService._sync_states(scholarship, clean_payload["states"])
 
     @staticmethod
     def _sync_categories(scholarship: Scholarship, category_slugs: list[str]) -> None:
         """Replace scholarship category mappings."""
-        categories = Category.query.filter(Category.slug.in_(category_slugs)).all()
+        with db.session.no_autoflush:
+            categories = Category.query.filter(Category.slug.in_(category_slugs)).all()
         category_map = {category.slug: category for category in categories}
-
-        scholarship.categories.clear()
+        if scholarship.scholarship_id is not None:
+            db.session.query(ScholarshipCategory).filter_by(
+                scholarship_id=scholarship.scholarship_id
+            ).delete(synchronize_session=False)
+            db.session.flush()
+        scholarship.categories = []
         for slug in category_slugs:
             scholarship.categories.append(
-                ScholarshipCategory(category=category_map[slug])
+                ScholarshipCategory(category=category_map[slug], scholarship=scholarship)
             )
 
     @staticmethod
     def _sync_states(scholarship: Scholarship, state_codes: list[str]) -> None:
         """Replace scholarship state mappings."""
-        states = State.query.filter(State.code.in_(state_codes)).all()
+        with db.session.no_autoflush:
+            states = State.query.filter(State.code.in_(state_codes)).all()
         state_map = {state.code: state for state in states}
-
-        scholarship.states.clear()
+        if scholarship.scholarship_id is not None:
+            db.session.query(ScholarshipState).filter_by(
+                scholarship_id=scholarship.scholarship_id
+            ).delete(synchronize_session=False)
+            db.session.flush()
+        scholarship.states = []
         for code in state_codes:
             scholarship.states.append(
-                ScholarshipState(state=state_map[code])
+                ScholarshipState(state=state_map[code], scholarship=scholarship)
             )
 
     @staticmethod

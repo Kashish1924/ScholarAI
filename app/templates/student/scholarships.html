@@ -147,7 +147,7 @@
             </div>
         </div>
         <div class="row g-4">
-            {% for scholarship in result.items %}
+            {% for scholarship in result["items"] %}
                 <div class="col-md-6 col-xl-4">{{ scholarship_card(scholarship) }}</div>
             {% else %}
                 <div class="col-12">

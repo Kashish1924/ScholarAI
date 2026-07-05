@@ -1,6 +1,9 @@
 from flask_wtf import FlaskForm
 from wtforms import BooleanField, FileField, IntegerField, PasswordField, SelectField, StringField, SubmitField, TextAreaField
-from wtforms.validators import DataRequired, Email, Length, Optional, URL
+from wtforms.validators import DataRequired, Length, Optional, Regexp, URL
+
+
+EMAIL_REGEX = r"^[^@\s]+@[^@\s]+\.[^@\s]+$"
 
 
 class AdminLoginForm(FlaskForm):
@@ -8,7 +11,7 @@ class AdminLoginForm(FlaskForm):
 
     email = StringField(
         "Email",
-        validators=[DataRequired(), Email(), Length(max=255)],
+        validators=[DataRequired(), Regexp(EMAIL_REGEX, message="Enter a valid email address."), Length(max=255)],
     )
     password = PasswordField(
         "Password",
@@ -171,7 +174,10 @@ class ContactForm(FlaskForm):
     """Public contact form."""
 
     full_name = StringField("Full Name", validators=[DataRequired(), Length(max=120)])
-    email = StringField("Email", validators=[DataRequired(), Email(), Length(max=255)])
+    email = StringField(
+        "Email",
+        validators=[DataRequired(), Regexp(EMAIL_REGEX, message="Enter a valid email address."), Length(max=255)],
+    )
     subject = StringField("Subject", validators=[DataRequired(), Length(max=255)])
     message = TextAreaField("Message", validators=[DataRequired(), Length(max=3000)])
     submit = SubmitField("Send Message")
