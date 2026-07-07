@@ -63,13 +63,21 @@ ScholarAI/
 |   |-- init_db.py
 |   `-- seed_admin.py
 |-- docs/
+|-- screenshots/
+|   |-- home.png
+|   |-- scholarships.png
+|   |-- scholarship-detail.png
+|   |-- eligibility-checker.png
+|   |-- admin-dashboard.png
+|   |-- admin-analytics.png
+|   `-- admin-analytics1.png
 |-- tests/
 |-- app.py
 |-- requirements.txt
 |-- render.yaml
+|-- README.md
 `-- wsgi.py
 ```
-
 ## Installation
 
 ```bash
@@ -134,15 +142,29 @@ For production-style serving:
 gunicorn wsgi:app
 ```
 
-## Screenshots (leave placeholders)
+## Screenshots
 
-- Home Page: `screenshots/home.png`
-- Scholarship Listing: `screenshots/scholarships.png`
-- Scholarship Detail: `screenshots/scholarship-detail.png`
-- Eligibility Checker: `screenshots/eligibility-checker.png`
-- Admin Dashboard: `screenshots/admin-dashboard.png`
-- Analytics Dashboard: `screenshots/admin-analytics.png`
-- Analytics Dashboard2: `screenshots/admin-analytics1.png`
+### Home Page
+![Home Page](screenshots/home.png)
+
+### Scholarship Listing
+![Scholarship Listing](screenshots/scholarships.png)
+
+### Scholarship Detail
+![Scholarship Detail](screenshots/scholarship-detail.png)
+
+### Eligibility Checker
+![Eligibility Checker](screenshots/eligibility-checker.png)
+
+### Admin Dashboard
+![Admin Dashboard](screenshots/admin-dashboard.png)
+
+### Analytics Dashboard
+![Analytics Dashboard](screenshots/admin-analytics.png)
+
+### Analytics Dashboard 2
+![Analytics Dashboard 2](screenshots/admin-analytics2.png)
+
 
 ## REST API Endpoints
 
@@ -231,7 +253,7 @@ Current test coverage includes:
 
 ## Author
 
-**Your Name Here**
+**kashish kumari**
 
-- GitHub: `https://github.com/your-username`
-- LinkedIn: `https://linkedin.com/in/your-profile`
+- GitHub: `https://github.com/Kashish1924/ScholarAI`
+
