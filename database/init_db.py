@@ -6,10 +6,11 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from sqlalchemy import inspect
+from werkzeug.security import generate_password_hash
 
 from app import create_app
 from app.extensions import db
-from app.models import Category, FAQ, News, Notification, Scholarship, State
+from app.models import Admin, Category, FAQ, News, Notification, Scholarship, State
 from app.services.content_service import ContentService
 from app.services.scholarship_service import ScholarshipService
 
@@ -162,6 +163,10 @@ SAMPLE_SCHOLARSHIPS = [
     },
 ]
 
+DEFAULT_ADMIN_FULL_NAME = "Administrator"
+DEFAULT_ADMIN_EMAIL = "admin@scholarai.com"
+DEFAULT_ADMIN_PASSWORD = "Admin@123"
+
 
 def initialize_database():
     """Create all configured database tables and seed first-run data."""
@@ -169,9 +174,10 @@ def initialize_database():
     with app.app_context():
         db.create_all()
         _seed_master_data()
+        default_admin_created = _ensure_default_admin()
         seeded_scholarships = _seed_sample_scholarships()
         _seed_content_placeholders()
-        _print_database_status(seeded_scholarships)
+        _print_database_status(seeded_scholarships, default_admin_created)
 
 
 def _seed_master_data() -> None:
@@ -204,6 +210,21 @@ def _seed_sample_scholarships() -> int:
         ScholarshipService.create_scholarship(payload)
         created_count += 1
     return created_count
+
+
+def _ensure_default_admin() -> bool:
+    """Create the default admin when the admin table is empty."""
+    if Admin.query.count() > 0:
+        return False
+
+    admin = Admin(
+        full_name=DEFAULT_ADMIN_FULL_NAME,
+        email=DEFAULT_ADMIN_EMAIL,
+        password_hash=generate_password_hash(DEFAULT_ADMIN_PASSWORD),
+    )
+    db.session.add(admin)
+    db.session.commit()
+    return True
 
 
 def _seed_content_placeholders() -> None:
@@ -247,14 +268,25 @@ def _seed_content_placeholders() -> None:
         )
 
 
-def _print_database_status(seeded_scholarships: int) -> None:
+def _print_database_status(seeded_scholarships: int, default_admin_created: bool) -> None:
     """Print a compact database setup summary."""
     inspector = inspect(db.engine)
     tables = sorted(inspector.get_table_names())
     print("ScholarAI database initialized successfully.")
     print(f"Tables created: {', '.join(tables)}")
+    print(f"Current admins in database: {Admin.query.count()}")
     if seeded_scholarships:
         print(f"Sample scholarships seeded: {seeded_scholarships}")
+    if default_admin_created:
+        print("Default admin created:")
+        print(f"  Full Name: {DEFAULT_ADMIN_FULL_NAME}")
+        print(f"  Email: {DEFAULT_ADMIN_EMAIL}")
+        print(f"  Password: {DEFAULT_ADMIN_PASSWORD}")
+    elif Admin.query.filter_by(email=DEFAULT_ADMIN_EMAIL).first() is not None:
+        print("Default admin credentials:")
+        print(f"  Full Name: {DEFAULT_ADMIN_FULL_NAME}")
+        print(f"  Email: {DEFAULT_ADMIN_EMAIL}")
+        print(f"  Password: {DEFAULT_ADMIN_PASSWORD}")
     print(f"Current scholarships in database: {Scholarship.query.count()}")
     print(f"Current categories in database: {Category.query.count()}")
     print(f"Current states in database: {State.query.count()}")
